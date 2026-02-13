@@ -3,99 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Vendas Privado</title>
+    <title>Portal Privado</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #2d2d2d;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 1rem;
-            border: 1px solid #444;
-            border-radius: 5px;
-            background-color: #3d3d3d;
-            color: white;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        button:hover { background-color: #0056b3; }
-        .secondary { background-color: #6c757d; }
+        body { font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #1e1e1e; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #333; background: #252525; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #007bff; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
         .hidden { display: none !important; }
-        .error-msg { color: #ff4d4d; margin-bottom: 1rem; font-size: 0.9rem; }
-        .captcha-box {
-            background: #333;
-            padding: 15px;
-            border: 1px solid #555;
-            margin-bottom: 15px;
-        }
+        .error { color: #ff5555; font-size: 14px; margin-bottom: 10px; }
+        .captcha { background: #2a2a2a; padding: 15px; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="container">
-        <h2>Acesso Restrito</h2>
-        <p>Informe o código (1-9008)</p>
-        <div id="login-error" class="error-msg"></div>
+        <h2>Acesso</h2>
+        <div id="msg-erro" class="error"></div>
 
-        <div id="captcha-container" class="hidden captcha-box">
-            <p>Segurança: Quanto é <span id="captcha-q1"></span> + <span id="captcha-q2"></span>?</p>
-            <input type="number" id="captcha-input">
-            <button onclick="verificarCaptcha()">Validar Humano</button>
+        <div id="captcha-box" class="hidden captcha">
+            <p>Verificação: <span id="q1"></span> + <span id="q2"></span>?</p>
+            <input type="number" id="ans">
+            <button onclick="validarCap()">Confirmar</button>
         </div>
 
-        <div id="input-area">
-            <input type="number" id="access-code" min="1" max="9008">
-            <button onclick="tentarLogin()">Entrar</button>
+        <div id="form-login">
+            <input type="number" id="code" placeholder="Código 1-9008">
+            <button onclick="entrar()">Acessar</button>
         </div>
-        
-        <div id="ban-message" class="hidden">
-            <p style="color: #ff4d4d;">BLOQUEADO POR 15 MINUTOS</p>
-            <p id="timer-display">15:00</p>
+
+        <div id="ban-box" class="hidden">
+            <p style="color:orange">ACESSO BLOQUEADO</p>
+            <p>Tente novamente em: <span id="timer">15:00</span></p>
         </div>
     </div>
 
     <div id="feedback-screen" class="container hidden">
-        <h2>Análise de Estratégia</h2>
-        <div style="text-align: left; background: #333; padding: 10px; margin-bottom: 15px;">
-            <strong>Métricas Atuais:</strong>
-            <p>Vendas: R$ 12.450 | Conversão: 3.2%</p>
-        </div>
-        <textarea id="feedback-text" rows="4" placeholder="Sua análise..."></textarea>
-        <button onclick="enviarFeedback()">Enviar Feedback</button>
-        <button onclick="voltarParaLogin()" id="btn-retry" class="secondary">Tentar Novamente</button>
+        <h2>Área de Feedback</h2>
+        <p>Vendas Hoje: R$ 12.450,00</p>
+        <textarea id="f-text" rows="4" placeholder="Sua análise..."></textarea>
+        <button onclick="envFeedback()">Enviar para o Firebase</button>
+        <button onclick="irLogin()" style="background:#555; margin-top:10px">Voltar</button>
     </div>
 
-    <div id="dashboard-screen" class="container hidden">
-        <h1 style="color: #28a745;">Painel de Vendas</h1>
-        <p>Acesso total liberado.</p>
-        <button onclick="location.reload()" style="background-color: #dc3545;">Sair</button>
+    <div id="vendas-screen" class="container hidden">
+        <h1 style="color:#00ff88">Sucesso!</h1>
+        <p>Você entrou no site de vendas.</p>
+        <button onclick="location.reload()" style="background:#ff4444">Sair</button>
     </div>
 
     <script type="module">
@@ -111,109 +65,91 @@
             appId: "1:316525003872:web:5327dac57baabdd3792f05",
             measurementId: "G-MWMF7NW7EH"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.enviarFeedback = async function() {
-            const txt = document.getElementById('feedback-text').value;
-            const now = Date.now();
-            if (txt.length < 5) return alert("Escreva algo mais longo.");
-            if (now - window.lastFeedback < 30000) return alert("Aguarde 30s (Anti-spam).");
-
+        window.envFeedback = async function() {
+            const t = document.getElementById('f-text').value;
+            if(t.length < 5) return alert("Feedback muito curto.");
             try {
-                await addDoc(collection(db, "feedbacks"), { msg: txt, time: serverTimestamp() });
-                window.lastFeedback = now;
-                alert("Feedback enviado!");
-                document.getElementById('feedback-text').value = "";
-            } catch (e) { alert("Erro ao conectar ao Firebase."); }
-        };
+                await addDoc(collection(db, "feedbacks"), { mensagem: t, data: serverTimestamp() });
+                alert("Enviado ao Firebase!");
+                document.getElementById('f-text').value = "";
+            } catch(e) { alert("Erro no Firebase. Verifique se as regras do banco estão abertas."); }
+        }
     </script>
 
     <script>
-        const TARGET_HASH = "db8e1af0cb3aca1ae2d0018624204529aa2c2753372579a05a15328572d422a5";
-        let attempts = 0, captchaSolved = false, resCaptcha = 0;
-        window.lastFeedback = 0;
+        let erros = 0, capOk = false, res = 0;
+        
+        function entrar() {
+            if(isBanned()) return;
+            if(erros >= 4 && !capOk) return showCap();
 
-        async function hash(s) {
-            const utf8 = new TextEncoder().encode(s);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function tentarLogin() {
-            if (isBanned()) return;
-            if (attempts >= 4 && !captchaSolved) return gerarCaptcha();
-
-            const val = document.getElementById('access-code').value;
-            if (await hash(val) === TARGET_HASH) {
+            const c = document.getElementById('code').value;
+            // O código secreto está aqui de forma ofuscada (2000 * 3 + 767 = 6767)
+            if(parseInt(c) === (2000 * 3 + 767)) {
                 document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('dashboard-screen').classList.remove('hidden');
+                document.getElementById('vendas-screen').classList.remove('hidden');
             } else {
-                attempts++;
-                document.getElementById('access-code').value = '';
-                if (attempts === 2) trocarParaFeedback();
-                else if (attempts === 4) gerarCaptcha();
-                else if (attempts >= 5) aplicarBanimento();
-                else document.getElementById('login-error').innerText = `Errado (${attempts}/5)`;
+                erros++;
+                document.getElementById('code').value = '';
+                if(erros === 2) irFeedback();
+                else if(erros === 4) showCap();
+                else if(erros >= 5) banir();
+                else document.getElementById('msg-erro').innerText = "Código incorreto ("+erros+"/5)";
             }
         }
 
-        function gerarCaptcha() {
-            document.getElementById('input-area').classList.add('hidden');
-            document.getElementById('captcha-container').classList.remove('hidden');
-            const n1 = Math.floor(Math.random() * 10), n2 = Math.floor(Math.random() * 10);
-            resCaptcha = n1 + n2;
-            document.getElementById('captcha-q1').innerText = n1;
-            document.getElementById('captcha-q2').innerText = n2;
+        function showCap() {
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('captcha-box').classList.remove('hidden');
+            const a = Math.floor(Math.random()*10), b = Math.floor(Math.random()*10);
+            res = a + b;
+            document.getElementById('q1').innerText = a;
+            document.getElementById('q2').innerText = b;
         }
 
-        function verificarCaptcha() {
-            if (parseInt(document.getElementById('captcha-input').value) === resCaptcha) {
-                captchaSolved = true;
-                document.getElementById('captcha-container').classList.add('hidden');
-                document.getElementById('input-area').classList.remove('hidden');
-                document.getElementById('login-error').innerText = "Captcha OK. Última chance.";
-            } else { alert("Calculo errado!"); gerarCaptcha(); }
+        function validarCap() {
+            if(parseInt(document.getElementById('ans').value) === res) {
+                capOk = true;
+                document.getElementById('captcha-box').classList.add('hidden');
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('msg-erro').innerText = "Captcha OK! Última tentativa.";
+            } else { alert("Errado!"); showCap(); }
         }
 
-        function trocarParaFeedback() {
+        function irFeedback() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('feedback-screen').classList.remove('hidden');
-            if (isBanned()) document.getElementById('btn-retry').classList.add('hidden');
         }
 
-        function voltarParaLogin() {
+        function irLogin() {
+            if(isBanned()) return alert("Banido.");
             document.getElementById('feedback-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        function isBanned() {
-            const t = localStorage.getItem('ban_vendas');
-            return t && (Date.now() - t < 900000);
-        }
-
-        function aplicarBanimento() {
-            localStorage.setItem('ban_vendas', Date.now());
-            document.getElementById('input-area').classList.add('hidden');
-            document.getElementById('captcha-container').classList.add('hidden');
-            document.getElementById('ban-message').classList.remove('hidden');
-            let time = 900;
-            const iv = setInterval(() => {
-                const m = Math.floor(time / 60), s = time % 60;
-                document.getElementById('timer-display').innerText = `${m}:${s<10?'0':''}${s}`;
-                if (--time < 0) { clearInterval(iv); localStorage.removeItem('ban_vendas'); location.reload(); }
+        function banir() {
+            localStorage.setItem('block_time', Date.now());
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('captcha-box').classList.add('hidden');
+            document.getElementById('ban-box').classList.remove('hidden');
+            let t = 900;
+            const i = setInterval(() => {
+                const m = Math.floor(t/60), s = t%60;
+                document.getElementById('timer').innerText = m+":"+(s<10?'0':'')+s;
+                if(--t < 0) { clearInterval(i); localStorage.removeItem('block_time'); location.reload(); }
             }, 1000);
-            setTimeout(trocarParaFeedback, 3000);
+            setTimeout(irFeedback, 2000);
         }
 
-        if (isBanned()) {
-            document.addEventListener("DOMContentLoaded", () => {
-                trocarParaFeedback();
-                document.getElementById('login-screen').classList.remove('hidden');
-                aplicarBanimento();
-            });
+        function isBanned() {
+            const b = localStorage.getItem('block_time');
+            return b && (Date.now() - b < 900000);
         }
+
+        if(isBanned()) banir();
     </script>
 </body>
 </html>
