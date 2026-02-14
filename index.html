@@ -29,8 +29,13 @@
 
         <div id="form-login">
             <input type="number" id="code" placeholder="Digite o código (1-9008)">
-            <button onclick="entrar()">Acessar</button>
-        </div>
+            <button onclick="entrar()// Dentro da função entrar() no index.html
+if(parseInt(input) === SENHA_MESTRA) {
+    // CRIA A SESSÃO SEGURA (Isso permite recarregar a página sem sair)
+    sessionStorage.setItem('sessao_autenticada', 'true');
+    // REDIRECIONA PARA O NOVO ARQUIVO
+    window.location.href = 'vendas.html'; 
+}
 
         <div id="ban-box" class="hidden">
             <p style="color:#ff4444; font-weight: bold;">BLOQUEADO POR TENTATIVAS</p>
@@ -175,3 +180,4 @@
     </script>
 </body>
 </html>
+
