@@ -13,7 +13,6 @@
         .big-btn:hover { border-color: #007bff; transform: scale(1.02); }
         .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; }
 
-        /* Interface de Venda */
         #tela-venda { display: none; max-width: 1300px; margin: 0 auto; grid-template-columns: 1fr 380px; gap: 20px; }
         .search-bar { width: 100%; padding: 15px; background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 15px; font-size: 1.1rem; }
         .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; height: 70vh; overflow-y: auto; }
@@ -27,7 +26,6 @@
         .total-linha { display: flex; justify-content: space-between; font-size: 1.1rem; margin-bottom: 5px; }
         .total-final { font-size: 2rem; color: #28a745; font-weight: bold; margin-top: 10px; }
 
-        /* Modais */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 500px; text-align: center; }
         .pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
@@ -42,7 +40,7 @@
 </head>
 <body>
     <div id="main-ui">
-        <h1 style="text-align: center; color: #333;">PDV MASTER V4.1</h1>
+        <h1 style="text-align: center; color: #333;">PDV MASTER V4.2</h1>
         <div id="menu-principal">
             <div class="big-btn" style="background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png');" onclick="abrirVenda()"><span>VENDER (1)</span></div>
             <a href="analizar.html" class="big-btn" style="background-image: url('https://image.pngaaa.com/268/3573268-middle.png');"><span>ANALISAR (2)</span></a>
@@ -54,7 +52,7 @@
         <div>
             <div style="display:flex; gap:10px; align-items: center;">
                 <button onclick="fecharVenda()" style="padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer">VOLTAR (ESC)</button>
-                <input type="text" id="busca-prod" class="search-bar" placeholder="Pesquisar produto pelo nome... (4)">
+                <input type="text" id="busca-prod" class="search-bar" placeholder="Pesquisar produto pelo nome... (F1)">
             </div>
             <div class="grid-produtos" id="grade"></div>
         </div>
@@ -136,7 +134,6 @@
             });
         }
 
-        // Pesquisa
         document.getElementById('busca-prod').addEventListener('input', (e) => {
             const termo = e.target.value.toLowerCase();
             const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(termo));
@@ -202,29 +199,30 @@
             document.getElementById('main-ui').classList.remove('hidden');
         };
 
+        // --- TRAVA DE SEGURANÇA REFORÇADA ---
         document.addEventListener('keydown', (e) => {
-            if(e.target.tagName === 'INPUT') {
-                if(e.key === 'Enter') {
-                    if(e.target.id === 'input-ajuste') aplicarAjuste();
-                }
-                return;
+            const tag = e.target.tagName;
+            const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+
+            if (isTyping) {
+                if (e.key === 'Enter' && e.target.id === 'input-ajuste') aplicarAjuste();
+                return; // Mata qualquer atalho se estiver digitando
             }
             
-            if(document.getElementById('tela-venda').style.display === 'grid') {
-                if(e.key === 'Escape') fecharVenda();
-                if(e.key === '5') document.getElementById('busca-prod').focus();
-                if(e.key === '6') abrirPagamento();
+            if (document.getElementById('tela-venda').style.display === 'grid') {
+                if (e.key === 'Escape') fecharVenda();
+                if (e.key === 'F1') { e.preventDefault(); document.getElementById('busca-prod').focus(); }
+                if (e.key === 'F2') abrirPagamento();
                 
-                // Atalhos no Modal de Pagamento
-                if(document.getElementById('modal-pagamento').style.display === 'flex') {
-                    if(e.key === '1' || e.code === 'Numpad1') finalizarDeVez('Pix');
-                    if(e.key === '2' || e.code === 'Numpad2') finalizarDeVez('Cartão');
-                    if(e.key === '3' || e.code === 'Numpad3') finalizarDeVez('Dinheiro');
+                if (document.getElementById('modal-pagamento').style.display === 'flex') {
+                    if (e.key === '1' || e.code === 'Numpad1') finalizarDeVez('Pix');
+                    if (e.key === '2' || e.code === 'Numpad2') finalizarDeVez('Cartão');
+                    if (e.key === '3' || e.code === 'Numpad3') finalizarDeVez('Dinheiro');
                 }
             } else {
-                if(e.key === '1' || e.code === 'Numpad1') abrirVenda();
-                if(e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
-                if(e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
+                if (e.key === '1' || e.code === 'Numpad1') abrirVenda();
+                if (e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
+                if (e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
             }
         });
     </script>
