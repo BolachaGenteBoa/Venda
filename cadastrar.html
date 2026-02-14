@@ -10,7 +10,7 @@
         header { grid-column: 1 / span 2; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .card { background: #1e1e1e; border-radius: 12px; padding: 15px; border: 1px solid #333; overflow-y: auto; position: relative; }
         #ai-tips { grid-column: 1; grid-row: 2; border-left: 4px solid #007bff; display: flex; flex-direction: column; }
-        #top-chart { grid-column: 2; grid-row: 2; display: flex; justify-content: center; }
+        #top-chart { grid-column: 2; grid-row: 2; display: flex; justify-content: center; align-items: center; }
         #sales-list { grid-column: 1 / span 2; grid-row: 3; }
         #low-stock-modal { position: fixed; bottom: 20px; left: 20px; width: 300px; max-height: 250px; background: #2c1010; border: 1px solid #ff4444; z-index: 100; display: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -20,12 +20,10 @@
         .dispensar-btn:hover { background: #ff4444; color: white; }
         .ai-text { font-style: italic; color: #aaa; line-height: 1.4; flex-grow: 1; }
         canvas { max-width: 100% !important; max-height: 100% !important; }
-        
-        /* Estilo do Feedback */
         .ai-feedback-area { margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; }
         .ai-feedback-area textarea { width: 100%; background: #121212; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; font-size: 12px; resize: none; box-sizing: border-box; }
         .ai-feedback-area button { width: 100%; background: #007bff; color: white; border: none; border-radius: 4px; padding: 5px; margin-top: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        .ai-feedback-area button:hover { background: #0056b3; }
+        .no-data { color: #555; text-align: center; font-size: 14px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -36,21 +34,23 @@
 
     <div id="ai-tips" class="card">
         <h3 style="margin-top:0; color:#007bff">🤖 IA Business Insight</h3>
-        <div id="ai-content" class="ai-text">Analisando tendências de vendas...</div>
+        <div id="ai-content" class="ai-text">Inicie as vendas para receber conselhos estratégicos...</div>
         
         <div class="ai-feedback-area">
-            <textarea id="ia-feedback-input" rows="2" placeholder="Dê uma dica para a IA (ex: ignore o feijão, foque em promoções de bebida...)"></textarea>
+            <textarea id="ia-feedback-input" rows="2" placeholder="Dê uma dica para a IA aprender..."></textarea>
             <button onclick="enviarFeedbackIA()">ENVIAR DICA PARA IA</button>
         </div>
     </div>
 
     <div id="top-chart" class="card">
-        <canvas id="pizzaChart"></canvas>
+        <div id="chart-loader" class="no-data">Nenhuma venda para gerar gráfico</div>
+        <canvas id="pizzaChart" style="display:none"></canvas>
     </div>
 
     <div id="sales-list" class="card">
         <h3 style="margin-top:0">Últimas Movimentações</h3>
-        <table>
+        <div id="list-loader" class="no-data">Aguardando primeira venda...</div>
+        <table id="tabela-vendas" style="display:none">
             <thead>
                 <tr>
                     <th>Data/Hora</th>
@@ -81,26 +81,35 @@
 
         let chartInstance = null;
 
-        // Função de Feedback
         window.enviarFeedbackIA = async function() {
             const input = document.getElementById('ia-feedback-input');
             const feedback = input.value;
             if(!feedback) return alert("Escreva algo para a IA!");
-
             try {
-                await addDoc(collection(db, "ia_feedback"), {
-                    texto: feedback,
-                    data: serverTimestamp()
-                });
-                alert("Dica enviada! A IA considerará isso nas próximas análises.");
+                await addDoc(collection(db, "ia_feedback"), { texto: feedback, data: serverTimestamp() });
+                alert("Dica enviada com sucesso!");
                 input.value = "";
-            } catch(e) {
-                alert("Erro ao enviar feedback.");
-            }
+            } catch(e) { alert("Erro ao salvar feedback."); }
         }
 
         onSnapshot(query(collection(db, "vendas"), orderBy("data", "desc"), limit(50)), (snap) => {
             const corpo = document.getElementById('corpo-vendas');
+            const tabela = document.getElementById('tabela-vendas');
+            const loader = document.getElementById('list-loader');
+            const chartLoader = document.getElementById('chart-loader');
+            const canvas = document.getElementById('pizzaChart');
+            
+            if (snap.empty) {
+                loader.style.display = "block";
+                tabela.style.display = "none";
+                return;
+            }
+
+            loader.style.display = "none";
+            tabela.style.display = "table";
+            chartLoader.style.display = "none";
+            canvas.style.display = "block";
+            
             corpo.innerHTML = "";
             let produtosContagem = {};
 
@@ -124,12 +133,10 @@
             const modal = document.getElementById('low-stock-modal');
             lista.innerHTML = "";
             let temBaixoEstoque = false;
-
             snap.forEach(doc => {
                 const p = doc.data();
                 const id = doc.id;
                 const dispensadoAte = localStorage.getItem('dispensado_'+id);
-                
                 if (p.estoque <= 3 && (!dispensadoAte || Date.now() > dispensadoAte)) {
                     temBaixoEstoque = true;
                     lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px">
@@ -150,7 +157,6 @@
         function atualizarGrafico(dados) {
             const ctx = document.getElementById('pizzaChart').getContext('2d');
             const top10 = Object.entries(dados).sort((a,b) => b[1] - a[1]).slice(0, 10);
-            
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'pie',
@@ -168,16 +174,11 @@
         function gerarDicaIA(dados) {
             const aiContent = document.getElementById('ai-content');
             const maisVendido = Object.entries(dados).sort((a,b) => b[1] - a[1])[0];
-            
-            if(!maisVendido) {
-                aiContent.innerText = "Aguardando mais vendas para gerar uma estratégia...";
-                return;
-            }
-
+            if(!maisVendido) return;
             const dicas = [
-                `O item "${maisVendido[0]}" está dominando. Considere aumentar a margem dele ou fazer um combo com produtos que saem pouco.`,
-                `Notei que "${maisVendido[0]}" tem alta rotatividade. Garanta que o estoque dele nunca fique abaixo de 10 unidades para não perder vendas.`,
-                `Sua diversidade de vendas está boa, mas focar em promoções relâmpago para o segundo colocado pode equilibrar seu lucro.`
+                `O item "${maisVendido[0]}" está dominando. Considere aumentar a margem dele.`,
+                `Notei que "${maisVendido[0]}" tem alta rotatividade. Mantenha o estoque alto.`,
+                `Foque em promoções para o segundo produto da lista para equilibrar o lucro.`
             ];
             aiContent.innerText = dicas[Math.floor(Math.random() * dicas.length)];
         }
