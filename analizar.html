@@ -3,28 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise de Vendas</title>
+    <title>Análise de Dados - V4.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .back-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; margin: 0; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 350px 1fr; gap: 20px; height: 100vh; overflow: hidden; }
+        header { grid-column: 1 / span 2; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .card { background: #1e1e1e; border-radius: 12px; padding: 15px; border: 1px solid #333; overflow-y: auto; position: relative; }
+        #ai-tips { grid-column: 1; grid-row: 2; border-left: 4px solid #007bff; display: flex; flex-direction: column; }
+        #top-chart { grid-column: 2; grid-row: 2; display: flex; justify-content: center; align-items: center; }
+        #sales-list { grid-column: 1 / span 2; grid-row: 3; }
+        #low-stock-modal { position: fixed; bottom: 20px; left: 20px; width: 300px; max-height: 250px; background: #2c1010; border: 1px solid #ff4444; z-index: 100; display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
+        .back-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .dispensar-btn { background: #444; color: #bbb; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .dispensar-btn:hover { background: #ff4444; color: white; }
+        .ai-text { font-style: italic; color: #aaa; line-height: 1.4; flex-grow: 1; }
+        canvas { max-width: 100% !important; max-height: 100% !important; }
+        .ai-feedback-area { margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; }
+        .ai-feedback-area textarea { width: 100%; background: #121212; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; font-size: 12px; resize: none; box-sizing: border-box; }
+        .ai-feedback-area button { width: 100%; background: #007bff; color: white; border: none; border-radius: 4px; padding: 5px; margin-top: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .no-data { color: #888; text-align: center; font-size: 16px; margin-top: 40px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Análise de Vendas</h1>
+    <header>
+        <h1>ANÁLISE DE VENDAS</h1>
         <a href="Vendas.html" class="back-btn">VOLTAR (NumPad 1)</a>
-    </div>
-    
-    <div id="conteudo-analise">
-        <p>Carregando dados do Firebase...</p>
-        </div>
+    </header>
 
-    <script>
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '1' || e.code === 'Numpad1') {
-                window.location.href = 'Vendas.html';
+    <div id="ai-tips" class="card">
+        <h3 style="margin-top:0; color:#007bff">🤖 IA Business Insight</h3>
+        <div id="ai-content" class="ai-text">Inicie as vendas para a IA analisar...</div>
+        <div class="ai-feedback-area">
+            <textarea id="ia-feedback-input" rows="2" placeholder="Dê uma dica para a IA..."></textarea>
+            <button onclick="enviarFeedbackIA()">ENVIAR DICA PARA IA</button>
+        </div>
+    </div>
+
+    <div id="top-chart" class="card">
+        <div id="chart-loader" class="no-data">Nenhuma venda para o gráfico</div>
+        <canvas id="pizzaChart" style="display:none"></canvas>
+    </div>
+
+    <div id="sales-list" class="card">
+        <h3 style="margin-top:0">Últimas Movimentações</h3>
+        <div id="list-loader" class="no-data">Aguardando primeira venda no banco...</div>
+        <table id="tabela-vendas" style="display:none">
+            <thead>
+                <tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th></tr>
+            </thead>
+            <tbody id="corpo-vendas"></tbody>
+        </table>
+    </div>
+
+    <div id="low-stock-modal" class="card">
+        <h3 style="margin-top:0; color:#ff4444; font-size:16px">⚠️ BAIXO ESTOQUE</h3>
+        <div id="lista-baixo-estoque"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", 
+            authDomain: "ebooklandia-f041aa.firebaseapp.com", 
+            projectId: "ebooklandia-f041aa", 
+            storageBucket: "ebooklandia-f041aa.firebasestorage.app", 
+            messagingSenderId: "316525003872", 
+            appId: "1:316525003872:web:5327dac57baabdd3792f05" 
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let chartInstance = null;
+
+        window.enviarFeedbackIA = async function() {
+            const input = document.getElementById('ia-feedback-input');
+            if(!input.value) return alert("Digite algo!");
+            try {
+                await addDoc(collection(db, "ia_feedback"), { texto: input.value, data: serverTimestamp() });
+                alert("Dica enviada!");
+                input.value = "";
+            } catch(e) { console.error(e); }
+        };
+
+        onSnapshot(query(collection(db, "vendas"), orderBy("data", "desc"), limit(50)), (snap) => {
+            const corpo = document.getElementById('corpo-vendas');
+            const tabela = document.getElementById('tabela-vendas');
+            const loader = document.getElementById('list-loader');
+            const canvas = document.getElementById('pizzaChart');
+            const chartLoader = document.getElementById('chart-loader');
+
+            if (snap.empty) {
+                loader.innerHTML = "Aguardando primeira venda no banco...";
+                loader.style.display = "block";
+                tabela.style.display = "none";
+                chartLoader.style.display = "block";
+                canvas.style.display = "none";
+                return;
             }
+
+            loader.style.display = "none";
+            tabela.style.display = "table";
+            canvas.style.display = "block";
+            chartLoader.style.display = "none";
+            
+            corpo.innerHTML = "";
+            let produtosContagem = {};
+
+            snap.forEach(doc => {
+                const v = doc.data();
+                const totalVenda = v.total || 0;
+                const dataVenda = v.data?.toDate ? v.data.toDate().toLocaleDateString() : '---';
+                
+                corpo.innerHTML += `<tr>
+                    <td>${dataVenda}</td>
+                    <td>${v.nome || 'Desconhecido'}</td>
+                    <td>${v.quantidade || 0}</td>
+                    <td>R$ ${totalVenda.toFixed(2)}</td>
+                </tr>`;
+                
+                if(v.nome) produtosContagem[v.nome] = (produtosContagem[v.nome] || 0) + (v.quantidade || 0);
+            });
+            
+            if(Object.keys(produtosContagem).length > 0) {
+                atualizarGrafico(produtosContagem);
+                document.getElementById('ai-content').innerText = "Análise concluída com sucesso!";
+            }
+        });
+
+        onSnapshot(collection(db, "produtos"), (snap) => {
+            const lista = document.getElementById('lista-baixo-estoque');
+            const modal = document.getElementById('low-stock-modal');
+            lista.innerHTML = "";
+            let temBaixo = false;
+            
+            snap.forEach(doc => {
+                const p = doc.data();
+                const dispensado = localStorage.getItem('dispensado_'+doc.id);
+                if (p.estoque <= 3 && (!dispensado || Date.now() > dispensado)) {
+                    temBaixo = true;
+                    lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span>${p.nome} (<b>${p.estoque}</b>)</span>
+                        <button class="dispensar-btn" onclick="dispensarItem('${doc.id}')">X</button>
+                    </div>`;
+                }
+            });
+            modal.style.display = temBaixo ? 'block' : 'none';
+        });
+
+        window.dispensarItem = (id) => {
+            localStorage.setItem('dispensado_'+id, Date.now() + 604800000);
+            location.reload();
+        };
+
+        function atualizarGrafico(dados) {
+            const ctx = document.getElementById('pizzaChart').getContext('2d');
+            const top10 = Object.entries(dados).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: top10.map(i => i[0]),
+                    datasets: [{
+                        data: top10.map(i => i[1]),
+                        backgroundColor: ['#007bff','#28a745','#dc3545','#ffc107','#6f42c1','#e83e8c','#fd7e14','#20c997','#17a2b8','#6c757d']
+                    }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '1' || e.code === 'Numpad1') window.location.href = 'Vendas.html';
         });
     </script>
 </body>
