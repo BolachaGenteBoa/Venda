@@ -23,7 +23,7 @@
         .ai-feedback-area { margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; }
         .ai-feedback-area textarea { width: 100%; background: #121212; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; font-size: 12px; resize: none; box-sizing: border-box; }
         .ai-feedback-area button { width: 100%; background: #007bff; color: white; border: none; border-radius: 4px; padding: 5px; margin-top: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        .no-data { color: #555; text-align: center; font-size: 14px; margin-top: 20px; }
+        .no-data { color: #888; text-align: center; font-size: 16px; margin-top: 40px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -34,9 +34,9 @@
 
     <div id="ai-tips" class="card">
         <h3 style="margin-top:0; color:#007bff">🤖 IA Business Insight</h3>
-        <div id="ai-content" class="ai-text">Aguardando dados...</div>
+        <div id="ai-content" class="ai-text">Inicie as vendas para a IA analisar...</div>
         <div class="ai-feedback-area">
-            <textarea id="ia-feedback-input" rows="2" placeholder="Ensine algo para a IA..."></textarea>
+            <textarea id="ia-feedback-input" rows="2" placeholder="Dê uma dica para a IA..."></textarea>
             <button onclick="enviarFeedbackIA()">ENVIAR DICA PARA IA</button>
         </div>
     </div>
@@ -48,7 +48,7 @@
 
     <div id="sales-list" class="card">
         <h3 style="margin-top:0">Últimas Movimentações</h3>
-        <div id="list-loader" class="no-data">Nenhuma venda registrada.</div>
+        <div id="list-loader" class="no-data">Aguardando primeira venda no banco...</div>
         <table id="tabela-vendas" style="display:none">
             <thead>
                 <tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th></tr>
@@ -67,8 +67,12 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
-            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", authDomain: "ebooklandia-f041aa.firebaseapp.com", projectId: "ebooklandia-f041aa", 
-            storageBucket: "ebooklandia-f041aa.firebasestorage.app", messagingSenderId: "316525003872", appId: "1:316525003872:web:5327dac57baabdd3792f05" 
+            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", 
+            authDomain: "ebooklandia-f041aa.firebaseapp.com", 
+            projectId: "ebooklandia-f041aa", 
+            storageBucket: "ebooklandia-f041aa.firebasestorage.app", 
+            messagingSenderId: "316525003872", 
+            appId: "1:316525003872:web:5327dac57baabdd3792f05" 
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -77,10 +81,12 @@
 
         window.enviarFeedbackIA = async function() {
             const input = document.getElementById('ia-feedback-input');
-            if(!input.value) return;
-            await addDoc(collection(db, "ia_feedback"), { texto: input.value, data: serverTimestamp() });
-            alert("Enviado!");
-            input.value = "";
+            if(!input.value) return alert("Digite algo!");
+            try {
+                await addDoc(collection(db, "ia_feedback"), { texto: input.value, data: serverTimestamp() });
+                alert("Dica enviada!");
+                input.value = "";
+            } catch(e) { console.error(e); }
         };
 
         onSnapshot(query(collection(db, "vendas"), orderBy("data", "desc"), limit(50)), (snap) => {
@@ -91,8 +97,11 @@
             const chartLoader = document.getElementById('chart-loader');
 
             if (snap.empty) {
+                loader.innerHTML = "Aguardando primeira venda no banco...";
                 loader.style.display = "block";
                 tabela.style.display = "none";
+                chartLoader.style.display = "block";
+                canvas.style.display = "none";
                 return;
             }
 
@@ -106,15 +115,23 @@
 
             snap.forEach(doc => {
                 const v = doc.data();
+                const totalVenda = v.total || 0;
+                const dataVenda = v.data?.toDate ? v.data.toDate().toLocaleDateString() : '---';
+                
                 corpo.innerHTML += `<tr>
-                    <td>${v.data?.toDate().toLocaleDateString() || '--'}</td>
-                    <td>${v.nome}</td>
-                    <td>${v.quantidade}</td>
-                    <td>R$ ${v.total.toFixed(2)}</td>
+                    <td>${dataVenda}</td>
+                    <td>${v.nome || 'Desconhecido'}</td>
+                    <td>${v.quantidade || 0}</td>
+                    <td>R$ ${totalVenda.toFixed(2)}</td>
                 </tr>`;
-                produtosContagem[v.nome] = (produtosContagem[v.nome] || 0) + v.quantidade;
+                
+                if(v.nome) produtosContagem[v.nome] = (produtosContagem[v.nome] || 0) + (v.quantidade || 0);
             });
-            atualizarGrafico(produtosContagem);
+            
+            if(Object.keys(produtosContagem).length > 0) {
+                atualizarGrafico(produtosContagem);
+                document.getElementById('ai-content').innerText = "Análise concluída com sucesso!";
+            }
         });
 
         onSnapshot(collection(db, "produtos"), (snap) => {
@@ -122,12 +139,14 @@
             const modal = document.getElementById('low-stock-modal');
             lista.innerHTML = "";
             let temBaixo = false;
+            
             snap.forEach(doc => {
                 const p = doc.data();
-                if (p.estoque <= 3 && !localStorage.getItem('dispensado_'+doc.id)) {
+                const dispensado = localStorage.getItem('dispensado_'+doc.id);
+                if (p.estoque <= 3 && (!dispensado || Date.now() > dispensado)) {
                     temBaixo = true;
                     lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>${p.nome} (${p.estoque})</span>
+                        <span>${p.nome} (<b>${p.estoque}</b>)</span>
                         <button class="dispensar-btn" onclick="dispensarItem('${doc.id}')">X</button>
                     </div>`;
                 }
@@ -142,12 +161,17 @@
 
         function atualizarGrafico(dados) {
             const ctx = document.getElementById('pizzaChart').getContext('2d');
-            const labels = Object.keys(dados);
-            const valores = Object.values(dados);
+            const top10 = Object.entries(dados).sort((a,b) => b[1] - a[1]).slice(0, 10);
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'pie',
-                data: { labels, datasets: [{ data: valores, backgroundColor: ['#007bff','#28a745','#dc3545','#ffc107'] }] },
+                data: {
+                    labels: top10.map(i => i[0]),
+                    datasets: [{
+                        data: top10.map(i => i[1]),
+                        backgroundColor: ['#007bff','#28a745','#dc3545','#ffc107','#6f42c1','#e83e8c','#fd7e14','#20c997','#17a2b8','#6c757d']
+                    }]
+                },
                 options: { plugins: { legend: { display: false } } }
             });
         }
