@@ -114,22 +114,37 @@
     </script>
 
     <script>
-        function buscarImagens() {
-            let term = document.getElementById('search-input').value || 'item';
+        async function buscarImagens() {
+            let term = document.getElementById('search-input').value;
+            if(!term) return;
             const container = document.getElementById('search-results');
-            container.innerHTML = "";
-            
-            // MÉTODO SEM API KEY: Usa o redirecionador de busca de imagens do Unsplash/Flickr
-            for(let i=0; i<16; i++) {
-                const imgUrl = `https://loremflickr.com/300/300/${encodeURIComponent(term)}?lock=${i}`;
-                const el = document.createElement('img');
-                el.src = imgUrl;
-                el.className = 'api-img';
-                el.onclick = () => { 
-                    document.getElementById('prod-img').value = imgUrl;
-                    document.getElementById('prod-img').style.border = "2px solid #28a745";
-                };
-                container.appendChild(el);
+            container.innerHTML = "Buscando...";
+
+            try {
+                // Nova busca via API Pexels (Filtro preciso)
+                const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(term)}&per_page=15`, {
+                    headers: { 'Authorization': '563492ad6f91700001000001859750d0354b4f039363198f1211e996' }
+                });
+                const data = await response.json();
+                container.innerHTML = "";
+                
+                if(data.photos.length === 0) {
+                    container.innerHTML = "Nada encontrado.";
+                    return;
+                }
+
+                data.photos.forEach(photo => {
+                    const el = document.createElement('img');
+                    el.src = photo.src.medium;
+                    el.className = 'api-img';
+                    el.onclick = () => { 
+                        document.getElementById('prod-img').value = photo.src.large;
+                        document.getElementById('prod-img').style.border = "2px solid #28a745";
+                    };
+                    container.appendChild(el);
+                });
+            } catch(e) { 
+                container.innerHTML = "Erro ao carregar fotos.";
             }
         }
 
