@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Vendas</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .back-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Análise de Vendas</h1>
+        <a href="Vendas.html" class="back-btn">VOLTAR (NumPad 1)</a>
+    </div>
+    
+    <div id="conteudo-analise">
+        <p>Carregando dados do Firebase...</p>
+        </div>
+
+    <script>
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '1' || e.code === 'Numpad1') {
+                window.location.href = 'Vendas.html';
+            }
+        });
+    </script>
+</body>
+</html>
