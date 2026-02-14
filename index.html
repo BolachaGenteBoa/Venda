@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Vendas</title>
+    <title>Portal de Acesso - Vendas</title>
     <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background: #1c1c1c; padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.7); border: 1px solid #333; }
         input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #007bff; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button { width: 100%; padding: 12px; background: #007bff; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover { background: #0056b3; }
         .hidden { display: none !important; }
         .error { color: #ff5555; background: rgba(255,85,85,0.1); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; }
@@ -23,38 +23,26 @@
         <div id="msg-erro" class="hidden error"></div>
 
         <div id="captcha-area" class="hidden">
-            <p>Validação de Segurança</p>
+            <p>Validação de Segurança Necessária</p>
             <div class="h-captcha" data-sitekey="11369d70-5cfe-4570-845a-03aac2ac0a4a" data-callback="onCaptchaSuccess"></div>
         </div>
 
         <div id="form-login">
             <input type="number" id="code" placeholder="Digite o código (1-9008)">
-            <button onclick="entrar()// Dentro da função entrar() no index.html
-if(parseInt(input) === SENHA_MESTRA) {
-    // CRIA A SESSÃO SEGURA (Isso permite recarregar a página sem sair)
-    sessionStorage.setItem('sessao_autenticada', 'true');
-    // REDIRECIONA PARA O NOVO ARQUIVO
-    window.location.href = 'vendas.html'; 
-}
+            <button onclick="entrar()">Acessar Sistema</button>
+        </div>
 
         <div id="ban-box" class="hidden">
             <p style="color:#ff4444; font-weight: bold;">BLOQUEADO POR TENTATIVAS</p>
-            <p>Aguarde: <span id="timer">15:00</span></p>
+            <p id="timer">15:00</p>
         </div>
     </div>
 
     <div id="feedback-screen" class="container hidden">
-        <h2>Análise de Estratégia</h2>
-        <p style="font-size: 14px; color: #aaa;">Vendas de Hoje: R$ 12.450,00</p>
-        <textarea id="f-text" rows="4" placeholder="Deixe seu feedback para melhorarmos..."></textarea>
-        <button onclick="envFeedback()">Enviar para o Firebase</button>
-        <button onclick="irLogin()" style="background:#444; margin-top:10px">Voltar ao Login</button>
-    </div>
-
-    <div id="vendas-screen" class="container hidden">
-        <h1 style="color:#00ff88">Site de Vendas Liberado!</h1>
-        <p>Bem-vindo ao painel oficial.</p>
-        <button onclick="location.reload()" style="background:#dc3545">Sair</button>
+        <h2>Central de Estratégia</h2>
+        <textarea id="f-text" rows="4" placeholder="Deixe seu feedback..."></textarea>
+        <button onclick="envFeedback()">Enviar Análise</button>
+        <button onclick="irLogin()" style="background:#444; margin-top:10px">Voltar</button>
     </div>
 
     <script type="module">
@@ -78,9 +66,9 @@ if(parseInt(input) === SENHA_MESTRA) {
             if(t.length < 5) return alert("Feedback muito curto.");
             try {
                 await addDoc(collection(db, "feedbacks"), { mensagem: t, data: serverTimestamp() });
-                alert("Feedback enviado!");
+                alert("Enviado!");
                 document.getElementById('f-text').value = "";
-            } catch(e) { alert("Erro ao salvar no Firebase."); }
+            } catch(e) { alert("Erro no Firebase."); }
         }
     </script>
 
@@ -89,95 +77,49 @@ if(parseInt(input) === SENHA_MESTRA) {
         let captchaResolvido = false;
         const SENHA_MESTRA = 6767;
 
-        window.onCaptchaSuccess = function(token) {
+        window.onCaptchaSuccess = function() {
             captchaResolvido = true;
             document.getElementById('captcha-area').classList.add('hidden');
             document.getElementById('form-login').classList.remove('hidden');
-            mostrarErro("Captcha validado! Última tentativa liberada.");
         };
 
         function entrar() {
             if(isBanned()) return;
-
             if(erros === 4 && !captchaResolvido) {
                 document.getElementById('form-login').classList.add('hidden');
                 document.getElementById('captcha-area').classList.remove('hidden');
-                mostrarErro("Resolva o Captcha antes da última tentativa.");
                 return;
             }
-
             const input = document.getElementById('code').value;
-            
             if(parseInt(input) === SENHA_MESTRA) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('vendas-screen').classList.remove('hidden');
+                sessionStorage.setItem('sessao_autenticada', 'true');
+                window.location.href = 'Vendas.html';
             } else {
                 erros++;
                 document.getElementById('code').value = '';
-                processarErro();
+                if(erros === 2) irFeedback();
+                else if(erros === 4) { document.getElementById('form-login').classList.add('hidden'); document.getElementById('captcha-area').classList.remove('hidden'); }
+                else if(erros >= 5) banir();
             }
         }
 
-        function processarErro() {
-            if(erros === 2) {
-                irFeedback();
-            } else if(erros === 4) {
-                document.getElementById('form-login').classList.add('hidden');
-                document.getElementById('captcha-area').classList.remove('hidden');
-                mostrarErro("Segurança: Resolva o captcha abaixo.");
-            } else if(erros >= 5) {
-                banir();
-            } else {
-                mostrarErro(`Incorreto. Tentativa ${erros} de 5.`);
-            }
-        }
-
-        function mostrarErro(msg) {
-            const div = document.getElementById('msg-erro');
-            div.innerText = msg;
-            div.classList.remove('hidden');
-        }
-
-        function irFeedback() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('feedback-screen').classList.remove('hidden');
-        }
-
-        function irLogin() {
-            if(isBanned()) return;
-            document.getElementById('feedback-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-        }
-
+        function irFeedback() { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('feedback-screen').classList.remove('hidden'); }
+        function irLogin() { if(!isBanned()) { document.getElementById('feedback-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); } }
+        
         function banir() {
-            localStorage.setItem('ban_vendas_v4', Date.now());
-            document.getElementById('form-login').classList.add('hidden');
-            document.getElementById('captcha-area').classList.add('hidden');
+            localStorage.setItem('ban_ts', Date.now());
             document.getElementById('ban-box').classList.remove('hidden');
-            
-            let tempo = 900;
-            const intervalo = setInterval(() => {
-                const m = Math.floor(tempo / 60);
-                const s = tempo % 60;
-                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                if(--tempo < 0) {
-                    clearInterval(intervalo);
-                    localStorage.removeItem('ban_vendas_v4');
-                    location.reload();
-                }
+            let t = 900;
+            const iv = setInterval(() => {
+                const m = Math.floor(t/60), s = t%60;
+                document.getElementById('timer').innerText = `${m}:${s<10?'0':''}${s}`;
+                if(--t < 0) { clearInterval(iv); localStorage.removeItem('ban_ts'); location.reload(); }
             }, 1000);
             setTimeout(irFeedback, 3000);
         }
 
-        function isBanned() {
-            const b = localStorage.getItem('ban_vendas_v4');
-            return b && (Date.now() - b < 900000);
-        }
-
-        if(isBanned()) {
-            window.onload = () => { banir(); irFeedback(); };
-        }
+        function isBanned() { const b = localStorage.getItem('ban_ts'); return b && (Date.now() - b < 900000); }
+        if(isBanned()) window.onload = () => { banir(); irFeedback(); };
     </script>
 </body>
 </html>
-
