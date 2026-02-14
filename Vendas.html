@@ -15,21 +15,21 @@
         #btn-cadastrar { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
         .screen-full { display: none; width: 98vw; gap: 15px; height: 85vh; margin-top: 20px; }
         .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid #333; }
-        .col-form { flex: 1; }
+        .col-form { flex: 0.8; }
         .col-list { flex: 1; overflow-y: auto; }
-        .col-search { flex: 1.2; }
+        .col-search { flex: 1.5; }
         input { width: 100%; padding: 10px; margin: 8px 0; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
         .action-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .exit-btn { background: #dc3545; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         td { padding: 8px; border-bottom: 1px solid #222; }
         .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
-        #search-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
-        .api-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #333; }
-        .api-img:hover { border-color: #007bff; transform: scale(1.03); }
+        #search-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; padding: 5px; }
+        .api-img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
+        .api-img:hover { border-color: #007bff; transform: scale(1.05); }
         .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -64,8 +64,8 @@
         <div class="col col-search">
             <h3 style="margin-top:0">Busca de Fotos</h3>
             <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="Ex: arroz, feijao kikaldo...">
-                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Buscar</button>
+                <input type="text" id="search-input" placeholder="O que você procura?">
+                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
             </div>
             <div id="search-results"></div>
         </div>
@@ -104,32 +104,23 @@
     </script>
 
     <script>
-        async function buscarImagens() {
-            let term = document.getElementById('search-input').value || 'item';
-            // CORREÇÃO: Remove espaços e caracteres especiais para a URL não quebrar
-            let cleanTerm = encodeURIComponent(term.trim());
-            
+        function buscarImagens() {
+            let term = document.getElementById('search-input').value || 'product';
             const container = document.getElementById('search-results');
-            container.innerHTML = "<p>Buscando...</p>";
+            container.innerHTML = "";
             
-            try {
-                container.innerHTML = "";
-                for(let i=0; i<15; i++) {
-                    // Usando um serviço que aceita os termos limpos
-                    const imgUrl = `https://loremflickr.com/320/320/${cleanTerm}?lock=${i}`;
-                    const el = document.createElement('img');
-                    el.src = imgUrl;
-                    el.className = 'api-img';
-                    el.onclick = () => { 
-                        document.getElementById('prod-img').value = imgUrl; 
-                        document.getElementById('prod-img').style.borderColor = "#28a745";
-                    };
-                    // Se a imagem falhar (404), ela some da grade
-                    el.onerror = function() { this.style.display = 'none'; };
-                    container.appendChild(el);
-                }
-            } catch(e) { 
-                container.innerHTML = "<p style='color:red'>Erro na busca.</p>";
+            // Gerador de imagens via Google/Unsplash redirects
+            for(let i=0; i<21; i++) {
+                const imgUrl = `https://source.unsplash.com/featured/300x300?${encodeURIComponent(term)}&sig=${i}`;
+                const el = document.createElement('img');
+                el.src = imgUrl;
+                el.className = 'api-img';
+                el.loading = "lazy";
+                el.onclick = () => { 
+                    document.getElementById('prod-img').value = imgUrl; 
+                    document.getElementById('prod-img').style.borderColor = "#28a745";
+                };
+                container.appendChild(el);
             }
         }
 
