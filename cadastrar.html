@@ -15,7 +15,7 @@
         #low-stock-modal { position: fixed; bottom: 20px; left: 20px; width: 300px; max-height: 250px; background: #2c1010; border: 1px solid #ff4444; z-index: 100; display: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
-        .back-btn { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .back-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
         .dispensar-btn { background: #444; color: #bbb; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
         .dispensar-btn:hover { background: #ff4444; color: white; }
         .ai-text { font-style: italic; color: #aaa; line-height: 1.4; flex-grow: 1; }
@@ -34,30 +34,24 @@
 
     <div id="ai-tips" class="card">
         <h3 style="margin-top:0; color:#007bff">🤖 IA Business Insight</h3>
-        <div id="ai-content" class="ai-text">Inicie as vendas para receber conselhos estratégicos...</div>
-        
+        <div id="ai-content" class="ai-text">Aguardando dados...</div>
         <div class="ai-feedback-area">
-            <textarea id="ia-feedback-input" rows="2" placeholder="Dê uma dica para a IA aprender..."></textarea>
+            <textarea id="ia-feedback-input" rows="2" placeholder="Ensine algo para a IA..."></textarea>
             <button onclick="enviarFeedbackIA()">ENVIAR DICA PARA IA</button>
         </div>
     </div>
 
     <div id="top-chart" class="card">
-        <div id="chart-loader" class="no-data">Nenhuma venda para gerar gráfico</div>
+        <div id="chart-loader" class="no-data">Nenhuma venda para o gráfico</div>
         <canvas id="pizzaChart" style="display:none"></canvas>
     </div>
 
     <div id="sales-list" class="card">
         <h3 style="margin-top:0">Últimas Movimentações</h3>
-        <div id="list-loader" class="no-data">Aguardando primeira venda...</div>
+        <div id="list-loader" class="no-data">Nenhuma venda registrada.</div>
         <table id="tabela-vendas" style="display:none">
             <thead>
-                <tr>
-                    <th>Data/Hora</th>
-                    <th>Produto</th>
-                    <th>Qtd</th>
-                    <th>Total</th>
-                </tr>
+                <tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th></tr>
             </thead>
             <tbody id="corpo-vendas"></tbody>
         </table>
@@ -83,22 +77,19 @@
 
         window.enviarFeedbackIA = async function() {
             const input = document.getElementById('ia-feedback-input');
-            const feedback = input.value;
-            if(!feedback) return alert("Escreva algo para a IA!");
-            try {
-                await addDoc(collection(db, "ia_feedback"), { texto: feedback, data: serverTimestamp() });
-                alert("Dica enviada com sucesso!");
-                input.value = "";
-            } catch(e) { alert("Erro ao salvar feedback."); }
-        }
+            if(!input.value) return;
+            await addDoc(collection(db, "ia_feedback"), { texto: input.value, data: serverTimestamp() });
+            alert("Enviado!");
+            input.value = "";
+        };
 
         onSnapshot(query(collection(db, "vendas"), orderBy("data", "desc"), limit(50)), (snap) => {
             const corpo = document.getElementById('corpo-vendas');
             const tabela = document.getElementById('tabela-vendas');
             const loader = document.getElementById('list-loader');
-            const chartLoader = document.getElementById('chart-loader');
             const canvas = document.getElementById('pizzaChart');
-            
+            const chartLoader = document.getElementById('chart-loader');
+
             if (snap.empty) {
                 loader.style.display = "block";
                 tabela.style.display = "none";
@@ -107,17 +98,16 @@
 
             loader.style.display = "none";
             tabela.style.display = "table";
-            chartLoader.style.display = "none";
             canvas.style.display = "block";
+            chartLoader.style.display = "none";
             
             corpo.innerHTML = "";
             let produtosContagem = {};
 
             snap.forEach(doc => {
                 const v = doc.data();
-                const dataFormatada = v.data?.toDate().toLocaleString('pt-BR') || '---';
                 corpo.innerHTML += `<tr>
-                    <td>${dataFormatada}</td>
+                    <td>${v.data?.toDate().toLocaleDateString() || '--'}</td>
                     <td>${v.nome}</td>
                     <td>${v.quantidade}</td>
                     <td>R$ ${v.total.toFixed(2)}</td>
@@ -125,62 +115,41 @@
                 produtosContagem[v.nome] = (produtosContagem[v.nome] || 0) + v.quantidade;
             });
             atualizarGrafico(produtosContagem);
-            gerarDicaIA(produtosContagem);
         });
 
         onSnapshot(collection(db, "produtos"), (snap) => {
             const lista = document.getElementById('lista-baixo-estoque');
             const modal = document.getElementById('low-stock-modal');
             lista.innerHTML = "";
-            let temBaixoEstoque = false;
+            let temBaixo = false;
             snap.forEach(doc => {
                 const p = doc.data();
-                const id = doc.id;
-                const dispensadoAte = localStorage.getItem('dispensado_'+id);
-                if (p.estoque <= 3 && (!dispensadoAte || Date.now() > dispensadoAte)) {
-                    temBaixoEstoque = true;
-                    lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px">
-                        <span>${p.nome} (<b>${p.estoque}</b>)</span>
-                        <button class="dispensar-btn" onclick="dispensarItem('${id}')">Dispensar</button>
+                if (p.estoque <= 3 && !localStorage.getItem('dispensado_'+doc.id)) {
+                    temBaixo = true;
+                    lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span>${p.nome} (${p.estoque})</span>
+                        <button class="dispensar-btn" onclick="dispensarItem('${doc.id}')">X</button>
                     </div>`;
                 }
             });
-            modal.style.display = temBaixoEstoque ? 'block' : 'none';
+            modal.style.display = temBaixo ? 'block' : 'none';
         });
 
         window.dispensarItem = (id) => {
-            const umaSemana = Date.now() + (7 * 24 * 60 * 60 * 1000);
-            localStorage.setItem('dispensado_'+id, umaSemana);
-            location.reload(); 
+            localStorage.setItem('dispensado_'+id, Date.now() + 604800000);
+            location.reload();
         };
 
         function atualizarGrafico(dados) {
             const ctx = document.getElementById('pizzaChart').getContext('2d');
-            const top10 = Object.entries(dados).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            const labels = Object.keys(dados);
+            const valores = Object.values(dados);
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'pie',
-                data: {
-                    labels: top10.map(i => i[0]),
-                    datasets: [{
-                        data: top10.map(i => i[1]),
-                        backgroundColor: ['#007bff','#28a745','#dc3545','#ffc107','#6f42c1','#e83e8c','#fd7e14','#20c997','#17a2b8','#6c757d']
-                    }]
-                },
-                options: { plugins: { legend: { display: false }, title: { display: true, text: 'TOP 10 PRODUTOS', color: '#fff' } } }
+                data: { labels, datasets: [{ data: valores, backgroundColor: ['#007bff','#28a745','#dc3545','#ffc107'] }] },
+                options: { plugins: { legend: { display: false } } }
             });
-        }
-
-        function gerarDicaIA(dados) {
-            const aiContent = document.getElementById('ai-content');
-            const maisVendido = Object.entries(dados).sort((a,b) => b[1] - a[1])[0];
-            if(!maisVendido) return;
-            const dicas = [
-                `O item "${maisVendido[0]}" está dominando. Considere aumentar a margem dele.`,
-                `Notei que "${maisVendido[0]}" tem alta rotatividade. Mantenha o estoque alto.`,
-                `Foque em promoções para o segundo produto da lista para equilibrar o lucro.`
-            ];
-            aiContent.innerText = dicas[Math.floor(Math.random() * dicas.length)];
         }
 
         document.addEventListener('keydown', (e) => {
