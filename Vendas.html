@@ -3,50 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Vendas V4.0</title>
+    <title>Sistema de Vendas Pro</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        
         #menu-principal { display: flex; gap: 20px; width: 100%; max-width: 1000px; height: 60vh; justify-content: center; align-items: center; margin: 50px auto; }
         .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; text-decoration: none; color: white; }
-        .big-btn:hover { transform: scale(1.02); border-color: #007bff; }
+        .big-btn:hover { border-color: #007bff; transform: scale(1.02); }
         .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; }
-        #btn-vender-ui { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png'); }
-        #btn-analisar-link { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
-        #btn-cadastrar-link { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
 
         /* Interface de Venda */
-        #tela-venda { display: none; max-width: 1200px; margin: 0 auto; grid-template-columns: 1fr 350px; gap: 20px; }
-        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; height: 80vh; overflow-y: auto; }
-        .card-prod { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .card-prod:hover { border-color: #28a745; background: #252525; }
-        .card-prod img { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; }
-        .carrinho { background: #1e1e1e; border-left: 2px solid #333; padding: 20px; display: flex; flex-direction: column; height: 85vh; }
-        .item-carrinho { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .total-area { margin-top: auto; font-size: 1.5rem; font-weight: bold; color: #28a745; border-top: 2px solid #333; padding-top: 10px; }
-        .btn-confirmar { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-voltar { background: #444; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
-        .hidden { display: none !important; }
+        #tela-venda { display: none; max-width: 1300px; margin: 0 auto; grid-template-columns: 1fr 380px; gap: 20px; }
+        .search-bar { width: 100%; padding: 15px; background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 15px; font-size: 1.1rem; }
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; height: 70vh; overflow-y: auto; }
+        .card-prod { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; }
+        .card-prod:hover { border-color: #28a745; }
+        .card-prod img { width: 100%; height: 110px; object-fit: cover; border-radius: 5px; }
+
+        .carrinho { background: #1e1e1e; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; height: 85vh; border: 1px solid #333; }
+        .item-carrinho { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
+        .total-area { margin-top: auto; padding-top: 15px; }
+        .total-linha { display: flex; justify-content: space-between; font-size: 1.1rem; margin-bottom: 5px; }
+        .total-final { font-size: 2rem; color: #28a745; font-weight: bold; margin-top: 10px; }
+
+        /* Modais */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 500px; text-align: center; }
+        .pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .pay-option { background: #252525; padding: 15px; border-radius: 10px; border: 1px solid #333; cursor: pointer; transition: 0.2s; }
+        .pay-option:hover { border-color: #007bff; background: #2a2a2a; }
+        .pay-option img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; }
+        .pay-option span { display: block; font-weight: bold; font-size: 0.9rem; }
+        
+        input[type="number"] { width: 100%; padding: 10px; background: #121212; border: 1px solid #444; color: white; border-radius: 5px; font-size: 1.2rem; margin: 10px 0; }
+        .btn-confirm { background: #28a745; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
-    <h1 id="main-title" style="text-align: center; color: #444;">SISTEMA CENTRAL V4.0</h1>
-    
-    <div id="menu-principal">
-        <div class="big-btn" id="btn-vender-ui" onclick="abrirVenda()"><span>VENDER (1)</span></div>
-        <a href="analizar.html" class="big-btn" id="btn-analisar-link"><span>ANALISAR (2)</span></a>
-        <a href="cadastrar.html" class="big-btn" id="btn-cadastrar-link"><span>CADASTRAR (3)</span></a>
+    <div id="main-ui">
+        <h1 style="text-align: center; color: #333;">PDV MASTER V4.1</h1>
+        <div id="menu-principal">
+            <div class="big-btn" style="background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png');" onclick="abrirVenda()"><span>VENDER (1)</span></div>
+            <a href="analizar.html" class="big-btn" style="background-image: url('https://image.pngaaa.com/268/3573268-middle.png');"><span>ANALISAR (2)</span></a>
+            <a href="cadastrar.html" class="big-btn" style="background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png');"><span>CADASTRAR (3)</span></a>
+        </div>
     </div>
 
     <div id="tela-venda">
         <div>
-            <button class="btn-voltar" onclick="fecharVenda()">← VOLTAR (ESC)</button>
-            <div class="grid-produtos" id="lista-venda-produtos"></div>
+            <div style="display:flex; gap:10px; align-items: center;">
+                <button onclick="fecharVenda()" style="padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer">VOLTAR (ESC)</button>
+                <input type="text" id="busca-prod" class="search-bar" placeholder="Pesquisar produto pelo nome... (F1)">
+            </div>
+            <div class="grid-produtos" id="grade"></div>
         </div>
+        
         <div class="carrinho">
-            <h3>CARRINHO</h3>
-            <div id="itens-carrinho" style="flex-grow: 1; overflow-y: auto;"></div>
-            <div class="total-area">TOTAL: R$ <span id="valor-total">0.00</span></div>
-            <button class="btn-confirmar" onclick="finalizarVenda()">FINALIZAR VENDA (F2)</button>
+            <h3>🛒 Carrinho</h3>
+            <div id="itens-cart" style="flex-grow:1; overflow-y:auto;"></div>
+            
+            <div class="total-area">
+                <div class="total-linha"><span>Subtotal:</span><span id="sub-val">R$ 0.00</span></div>
+                <div class="total-linha" style="color:#ff4444; cursor:pointer" onclick="abrirAdicoes()"><span>Ajustes (+/-):</span><span id="ajuste-val">R$ 0.00</span></div>
+                <div class="total-final">TOTAL: R$ <span id="total-val">0.00</span></div>
+                <button class="btn-confirm" style="margin-top:15px; background:#007bff;" onclick="abrirPagamento()">FECHAR PEDIDO (F2)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-adicoes" class="modal">
+        <div class="modal-content">
+            <h2>Ajuste de Valor</h2>
+            <p>Use valores negativos para desconto (ex: -5.00)</p>
+            <input type="number" id="input-ajuste" step="0.01" placeholder="0.00">
+            <button class="btn-confirm" onclick="aplicarAjuste()">APLICAR (ENTER)</button>
+        </div>
+    </div>
+
+    <div id="modal-pagamento" class="modal">
+        <div class="modal-content" style="width: 600px;">
+            <h2>FORMA DE PAGAMENTO</h2>
+            <div class="pay-grid">
+                <div class="pay-option" onclick="finalizarDeVez('Pix')">
+                    <img src="https://logospng.org/download/pix/logo-pix-icone-256.png">
+                    <span>PIX (1)</span>
+                </div>
+                <div class="pay-option" onclick="finalizarDeVez('Cartão')">
+                    <img src="https://static.vecteezy.com/system/resources/thumbnails/060/667/732/small/isometric-blue-credit-card-with-chip-on-transparent-background-concept-of-online-payment-banking-finance-shopping-and-cashless-transactions-png.png">
+                    <span>CARTÃO (2)</span>
+                </div>
+                <div class="pay-option" onclick="finalizarDeVez('Dinheiro')">
+                    <img src="https://static.vecteezy.com/system/resources/thumbnails/029/227/115/small/money-items-with-an-yellow-theme-isolated-on-alpha-background-3d-illustration-high-resolution-free-png.png">
+                    <span>DINHEIRO (3)</span>
+                </div>
+            </div>
+            <button onclick="fecharModais()" style="margin-top:20px; background:none; color:#888; border:none; cursor:pointer">Cancelar</button>
         </div>
     </div>
 
@@ -61,101 +113,118 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let produtos = [];
         let carrinho = [];
-        let produtosLocal = [];
+        let ajusteFinal = 0;
 
-        // Carregar produtos para venda
         onSnapshot(collection(db, "produtos"), (snap) => {
-            const container = document.getElementById('lista-venda-produtos');
-            container.innerHTML = "";
-            produtosLocal = [];
-            snap.forEach(d => {
-                const p = d.data();
-                const id = d.id;
-                produtosLocal.push({id, ...p});
-                container.innerHTML += `
-                    <div class="card-prod" onclick="adicionarAoCarrinho('${id}')">
+            produtos = [];
+            snap.forEach(d => produtos.push({id: d.id, ...d.data()}));
+            renderizarGrade(produtos);
+        });
+
+        function renderizarGrade(lista) {
+            const grade = document.getElementById('grade');
+            grade.innerHTML = "";
+            lista.forEach(p => {
+                grade.innerHTML += `
+                    <div class="card-prod" onclick="addCarrinho('${p.id}')">
                         <img src="${p.imagem || 'https://via.placeholder.com/100'}">
                         <div style="font-weight:bold; margin-top:5px;">${p.nome}</div>
                         <div style="color:#28a745">R$ ${p.preco.toFixed(2)}</div>
-                        <div style="font-size:12px; color:#888">Estoque: ${p.estoque}</div>
                     </div>`;
             });
-        });
-
-        window.adicionarAoCarrinho = (id) => {
-            const prod = produtosLocal.find(p => p.id === id);
-            if(prod.estoque <= 0) return alert("Produto sem estoque!");
-            carrinho.push(prod);
-            atualizarInterfaceCarrinho();
-        };
-
-        function atualizarInterfaceCarrinho() {
-            const container = document.getElementById('itens-carrinho');
-            const totalEl = document.getElementById('valor-total');
-            container.innerHTML = "";
-            let total = 0;
-            carrinho.forEach((item, index) => {
-                total += item.preco;
-                container.innerHTML += `
-                    <div class="item-carrinho">
-                        <span>${item.nome}</span>
-                        <span>R$ ${item.preco.toFixed(2)} <button onclick="removerDoCarrinho(${index})" style="background:none; border:none; color:red; cursor:pointer">X</button></span>
-                    </div>`;
-            });
-            totalEl.innerText = total.toFixed(2);
         }
 
-        window.removerDoCarrinho = (index) => {
-            carrinho.splice(index, 1);
-            atualizarInterfaceCarrinho();
+        // Pesquisa
+        document.getElementById('busca-prod').addEventListener('input', (e) => {
+            const termo = e.target.value.toLowerCase();
+            const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(termo));
+            renderizarGrade(filtrados);
+        });
+
+        window.addCarrinho = (id) => {
+            const p = produtos.find(p => p.id === id);
+            carrinho.push(p);
+            atualizarCart();
         };
 
-        window.finalizarVenda = async () => {
+        function atualizarCart() {
+            const container = document.getElementById('itens-cart');
+            container.innerHTML = "";
+            let subtotal = 0;
+            carrinho.forEach((item, i) => {
+                subtotal += item.preco;
+                container.innerHTML += `<div class="item-carrinho"><span>${item.nome}</span><span>R$ ${item.preco.toFixed(2)}</span></div>`;
+            });
+            document.getElementById('sub-val').innerText = `R$ ${subtotal.toFixed(2)}`;
+            document.getElementById('ajuste-val').innerText = `R$ ${ajusteFinal.toFixed(2)}`;
+            document.getElementById('total-val').innerText = (subtotal + ajusteFinal).toFixed(2);
+        }
+
+        window.abrirAdicoes = () => document.getElementById('modal-adicoes').style.display = 'flex';
+        window.aplicarAjuste = () => {
+            ajusteFinal = parseFloat(document.getElementById('input-ajuste').value) || 0;
+            atualizarCart();
+            fecharModais();
+        };
+
+        window.abrirPagamento = () => {
             if(carrinho.length === 0) return alert("Carrinho vazio!");
-            
+            document.getElementById('modal-pagamento').style.display = 'flex';
+        };
+
+        window.fecharModais = () => {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        };
+
+        window.finalizarDeVez = async (metodo) => {
             try {
+                const totalFinal = parseFloat(document.getElementById('total-val').innerText);
                 for(let item of carrinho) {
-                    // 1. Salva na coleção de vendas
                     await addDoc(collection(db, "vendas"), {
-                        nome: item.nome,
-                        quantidade: 1,
-                        total: item.preco,
-                        data: serverTimestamp()
+                        nome: item.nome, total: item.preco, metodo, data: serverTimestamp(), quantidade: 1
                     });
-                    // 2. Diminui o estoque
-                    const prodRef = doc(db, "produtos", item.id);
-                    await updateDoc(prodRef, {
-                        estoque: increment(-1)
-                    });
+                    await updateDoc(doc(db, "produtos", item.id), { estoque: increment(-1) });
                 }
-                alert("Venda realizada com sucesso!");
-                carrinho = [];
-                atualizarInterfaceCarrinho();
-                fecharVenda();
-            } catch(e) { alert("Erro ao processar venda."); }
+                alert(`Venda em ${metodo} finalizada!`);
+                location.reload();
+            } catch(e) { alert("Erro na venda!"); }
         };
 
         window.abrirVenda = () => {
-            document.getElementById('menu-principal').classList.add('hidden');
-            document.getElementById('main-title').classList.add('hidden');
+            document.getElementById('main-ui').classList.add('hidden');
             document.getElementById('tela-venda').style.display = 'grid';
         };
-
+        
         window.fecharVenda = () => {
             document.getElementById('tela-venda').style.display = 'none';
-            document.getElementById('menu-principal').classList.remove('hidden');
-            document.getElementById('main-title').classList.remove('hidden');
+            document.getElementById('main-ui').classList.remove('hidden');
         };
 
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('tela-venda').style.display === 'grid') {
-                if (e.key === 'Escape') fecharVenda();
-                if (e.key === 'F2') finalizarVenda();
+            if(e.target.tagName === 'INPUT') {
+                if(e.key === 'Enter') {
+                    if(e.target.id === 'input-ajuste') aplicarAjuste();
+                }
+                return;
+            }
+            
+            if(document.getElementById('tela-venda').style.display === 'grid') {
+                if(e.key === 'Escape') fecharVenda();
+                if(e.key === 'F1') document.getElementById('busca-prod').focus();
+                if(e.key === 'F2') abrirPagamento();
+                
+                // Atalhos no Modal de Pagamento
+                if(document.getElementById('modal-pagamento').style.display === 'flex') {
+                    if(e.key === '1' || e.code === 'Numpad1') finalizarDeVez('Pix');
+                    if(e.key === '2' || e.code === 'Numpad2') finalizarDeVez('Cartão');
+                    if(e.key === '3' || e.code === 'Numpad3') finalizarDeVez('Dinheiro');
+                }
             } else {
-                if (e.key === '1' || e.code === 'Numpad1') abrirVenda();
-                if (e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
-                if (e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
+                if(e.key === '1' || e.code === 'Numpad1') abrirVenda();
+                if(e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
+                if(e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
             }
         });
     </script>
