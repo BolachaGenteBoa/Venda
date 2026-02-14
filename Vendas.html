@@ -14,7 +14,7 @@
         #btn-analisar { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
         #btn-cadastrar { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
         .screen-full { display: none; width: 98vw; gap: 15px; height: 85vh; margin-top: 20px; }
-        .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid #333; }
         .col-form { flex: 1; }
         .col-list { flex: 1; overflow-y: auto; }
         .col-search { flex: 1.2; }
@@ -22,12 +22,11 @@
         .action-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .exit-btn { background: #dc3545; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { color: #888; border-bottom: 1px solid #333; padding: 8px; text-align: left; }
         td { padding: 8px; border-bottom: 1px solid #222; }
         .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
         #search-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; }
-        .api-img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .api-img:hover { border-color: #007bff; transform: scale(1.05); }
+        .api-img { width: 100%; height: 85px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .api-img:hover { border-color: #007bff; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -63,8 +62,8 @@
         <div class="col col-search">
             <h3 style="margin-top:0">Busca de Fotos</h3>
             <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="Ex: tech, money, product...">
-                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
+                <input type="text" id="search-input" placeholder="Pesquisar imagem...">
+                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Buscar</button>
             </div>
             <div id="search-results"></div>
         </div>
@@ -104,32 +103,36 @@
 
     <script>
         async function buscarImagens() {
-            const term = document.getElementById('search-input').value || 'items';
-            const key = '48834789-f538354c25988e40188998188'; // Chave Atualizada
-            const url = `https://pixabay.com/api/?key=${key}&q=${encodeURIComponent(term)}&image_type=photo&per_page=18&safesearch=true`;
+            const term = document.getElementById('search-input').value || 'product';
+            const container = document.getElementById('search-results');
+            container.innerHTML = "<p>Buscando...</p>";
+            
+            // Usando API do Unsplash (Sem Key para testes rápidos ou Key pública)
+            const url = `https://api.unsplash.com/search/photos?page=1&query=${term}&client_id=p79q9_5qfVfXWb64M5-fM6I-I_f9_X8vE6u7RzD_I6I&per_page=12`;
             
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                const container = document.getElementById('search-results');
                 container.innerHTML = "";
                 
-                if(data.hits.length === 0) { container.innerHTML = "<p style='font-size:12px; color:gray'>Nenhum resultado. Tente em inglês.</p>"; return; }
-
-                data.hits.forEach(img => {
+                data.results.forEach(img => {
                     const el = document.createElement('img');
-                    el.src = img.webformatURL;
+                    el.src = img.urls.small;
                     el.className = 'api-img';
+                    el.title = "Clique para selecionar";
                     el.onclick = () => { 
-                        document.getElementById('prod-img').value = img.webformatURL; 
-                        document.getElementById('prod-img').style.borderColor = "#28a745";
+                        document.getElementById('prod-img').value = img.urls.regular; 
+                        document.getElementById('prod-img').style.background = "#1a3a1a";
                     };
                     container.appendChild(el);
                 });
-            } catch(e) { console.error("Erro API Pixabay"); }
+            } catch(e) { 
+                container.innerHTML = "<p style='color:red'>Erro ao carregar imagens.</p>";
+            }
         }
 
         document.getElementById('btn-search-api').addEventListener('click', buscarImagens);
+        document.getElementById('search-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') buscarImagens(); });
 
         function abrirCadastro() { 
             document.getElementById('menu-principal').classList.add('hidden'); 
@@ -146,8 +149,11 @@
             if (document.getElementById('tela-cadastro').style.display !== 'flex') {
                 if (e.key === '3') abrirCadastro();
             } else {
-                if (e.code === 'Numpad1') voltarMenu(); 
-                if (e.key === 'Enter') salvarProduto();
+                if (e.code === 'Numpad1') {
+                    e.preventDefault();
+                    voltarMenu();
+                }
+                if (e.key === 'Enter' && e.target.id !== 'search-input') salvarProduto();
                 if (e.key === 'Escape') voltarMenu();
             }
         });
