@@ -5,32 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Controle</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         #menu-principal { display: flex; gap: 20px; width: 100%; max-width: 1000px; height: 60vh; justify-content: center; align-items: center; margin-top: 50px; }
-        .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); text-decoration: none; color: white; }
         .big-btn:hover { transform: scale(1.02); border-color: #007bff; background-color: #252525; }
         .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; text-transform: uppercase; }
-        #btn-vender { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png'); }
-        #btn-analisar { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
-        #btn-cadastrar { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
-        .screen-full { display: none; width: 98vw; gap: 15px; height: 85vh; margin-top: 20px; }
-        .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid #333; }
-        .col-form { flex: 0.8; }
-        .col-list { flex: 1.2; overflow-y: auto; }
-        .col-search { flex: 1.2; }
-        input { width: 100%; padding: 10px; margin: 8px 0; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        .action-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
-        .exit-btn { background: #dc3545; }
-        .del-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-weight: bold; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        td { padding: 8px; border-bottom: 1px solid #222; }
-        .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
-        #search-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; padding: 5px; }
-        .api-img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
-        .api-img:hover { border-color: #007bff; }
+        #btn-vender-ui { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png'); }
+        #btn-analisar-link { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
+        #btn-cadastrar-link { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
+        
+        /* Interface de Venda (Instantânea) */
+        #tela-venda { display: none; width: 100%; max-width: 1200px; margin-top: 20px; }
         .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -41,124 +27,40 @@
     <h1 id="main-title" style="color: #444;">SISTEMA CENTRAL V4.0</h1>
     
     <div id="menu-principal">
-        <div class="big-btn" id="btn-vender" onclick="alert('Aba Vender...')"><span>VENDER</span></div>
-        <div class="big-btn" id="btn-analisar" onclick="alert('Aba Analisar...')"><span>ANALISAR</span></div>
-        <div class="big-btn" id="btn-cadastrar" onclick="abrirCadastro()"><span>CADASTRAR ITENS</span></div>
+        <div class="big-btn" id="btn-vender-ui" onclick="abrirVenda()"><span>VENDER</span></div>
+        <a href="analizar.html" class="big-btn" id="btn-analisar-link"><span>ANALISAR</span></a>
+        <a href="cadastrar.html" class="big-btn" id="btn-cadastrar-link"><span>CADASTRAR ITENS</span></a>
     </div>
 
-    <div id="tela-cadastro" class="screen-full">
-        <div class="col col-form">
-            <h3 style="margin-top:0">Novo Produto</h3>
-            <input type="text" id="prod-nome" placeholder="Nome do Produto">
-            <input type="number" id="prod-preco" step="0.01" placeholder="Preço (R$)">
-            <input type="number" id="prod-estoque" placeholder="Estoque">
-            <input type="text" id="prod-img" placeholder="URL da Imagem">
-            <button class="action-btn" onclick="salvarProduto()">SALVAR (ENTER)</button>
-            <button class="action-btn exit-btn" onclick="voltarMenu()">SAIR (NumPad 1)</button>
-        </div>
-
-        <div class="col col-list">
-            <h3 style="margin-top:0">Produtos no Banco</h3>
-            <table><tbody id="lista-corpo"></tbody></table>
-        </div>
-
-        <div class="col col-search">
-            <h3 style="margin-top:0">Busca de Fotos</h3>
-            <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="O que você procura?">
-                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
-            </div>
-            <div id="search-results"></div>
-        </div>
+    <div id="tela-venda">
+        <h2>INTERFACE DE VENDA RÁPIDA</h2>
+        <button onclick="fecharVenda()" style="padding:10px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">VOLTAR (ESC)</button>
+        <p>Aqui entrará sua lógica de PDV que não pode esperar carregar.</p>
     </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, addDoc, deleteDoc, doc, collection, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
-        const firebaseConfig = { 
-            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", authDomain: "ebooklandia-f041aa.firebaseapp.com", projectId: "ebooklandia-f041aa", 
-            storageBucket: "ebooklandia-f041aa.firebasestorage.app", messagingSenderId: "316525003872", appId: "1:316525003872:web:5327dac57baabdd3792f05" 
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.salvarProduto = async function() {
-            const n = document.getElementById('prod-nome').value, p = document.getElementById('prod-preco').value;
-            const e = document.getElementById('prod-estoque').value, i = document.getElementById('prod-img').value;
-            if(!n || !p) return alert("Preencha Nome e Preço!");
-            try {
-                await addDoc(collection(db, "produtos"), { nome: n, preco: parseFloat(p), estoque: parseInt(e)||0, imagem: i, data: serverTimestamp() });
-                document.getElementById('prod-nome').value=""; document.getElementById('prod-preco').value=""; 
-                document.getElementById('prod-estoque').value=""; document.getElementById('prod-img').value="";
-            } catch(e) { alert("Erro ao salvar!"); }
-        }
-
-        window.excluirProduto = async function(id) {
-            if(confirm("Excluir item?")) { await deleteDoc(doc(db, "produtos", id)); }
-        }
-
-        onSnapshot(query(collection(db, "produtos"), orderBy("data", "desc")), (snap) => {
-            const corpo = document.getElementById('lista-corpo');
-            corpo.innerHTML = "";
-            snap.forEach(d => {
-                const item = d.data();
-                corpo.innerHTML += `<tr>
-                    <td><img src="${item.imagem||'https://via.placeholder.com/35'}" class="img-prev"></td>
-                    <td>${item.nome}</td>
-                    <td>R$ ${parseFloat(item.preco).toFixed(2)}</td>
-                    <td><button class="del-btn" onclick="excluirProduto('${d.id}')">×</button></td>
-                </tr>`;
-            });
-        });
-    </script>
 
     <script>
-        function buscarImagens() {
-            const term = document.getElementById('search-input').value;
-            if(!term) return;
-            const container = document.getElementById('search-results');
-            container.innerHTML = "Buscando...";
-            
-            // MÉTODO 100% GARANTIDO: Redirecionador de imagens reais sem API
-            // Usando o motor do Bing/DuckDuckGo via proxy de imagem
-            container.innerHTML = "";
-            for(let i=0; i<12; i++) {
-                const imgUrl = `https://tse${(i%4)+1}.mm.bing.net/th?q=${encodeURIComponent(term)}&pid=Api&mkt=pt-BR&cc=BR&setlang=pt&adlt=moderate&t=1&mw=247&mh=247&c=7&p=0&i=${i}`;
-                const el = document.createElement('img');
-                el.src = imgUrl;
-                el.className = 'api-img';
-                el.onerror = () => el.style.display = 'none';
-                el.onclick = () => { 
-                    document.getElementById('prod-img').value = imgUrl;
-                    document.getElementById('prod-img').style.border = "2px solid #28a745";
-                };
-                container.appendChild(el);
-            }
-        }
-
-        document.getElementById('btn-search-api').addEventListener('click', buscarImagens);
-
-        function abrirCadastro() { 
-            document.getElementById('menu-principal').classList.add('hidden'); 
+        function abrirVenda() {
+            document.getElementById('menu-principal').classList.add('hidden');
             document.getElementById('main-title').classList.add('hidden');
-            document.getElementById('tela-cadastro').style.display = 'flex'; 
+            document.getElementById('tela-venda').style.display = 'block';
         }
-        function voltarMenu() { 
-            document.getElementById('tela-cadastro').style.display = 'none'; 
+
+        function fecharVenda() {
+            document.getElementById('tela-venda').style.display = 'none';
             document.getElementById('menu-principal').classList.remove('hidden');
             document.getElementById('main-title').classList.remove('hidden');
         }
-        
+
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('tela-cadastro').style.display === 'flex') {
-                if (e.code === 'Numpad1') { e.preventDefault(); voltarMenu(); }
-                if (e.key === 'Enter') {
-                    if(document.activeElement.id === 'search-input') buscarImagens();
-                    else salvarProduto();
-                }
-                if (e.key === 'Escape') voltarMenu();
-            } else if (e.key === '3') abrirCadastro();
+            const vendaAberta = document.getElementById('tela-venda').style.display === 'block';
+            
+            if (!vendaAberta) {
+                if (e.key === '1' || e.code === 'Numpad1') abrirVenda();
+                if (e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
+                if (e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
+            } else {
+                if (e.key === 'Escape') fecharVenda();
+            }
         });
     </script>
 </body>
