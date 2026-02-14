@@ -3,63 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Controle</title>
+    <title>Sistema de Vendas V4.0</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        #menu-principal { display: flex; gap: 20px; width: 100%; max-width: 1000px; height: 60vh; justify-content: center; align-items: center; margin-top: 50px; }
-        .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); text-decoration: none; color: white; }
-        .big-btn:hover { transform: scale(1.02); border-color: #007bff; background-color: #252525; }
-        .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; text-transform: uppercase; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; overflow-x: hidden; }
+        #menu-principal { display: flex; gap: 20px; width: 100%; max-width: 1000px; height: 60vh; justify-content: center; align-items: center; margin: 50px auto; }
+        .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; text-decoration: none; color: white; }
+        .big-btn:hover { transform: scale(1.02); border-color: #007bff; }
+        .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; }
         #btn-vender-ui { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png'); }
         #btn-analisar-link { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
         #btn-cadastrar-link { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
-        
-        /* Interface de Venda (Instantânea) */
-        #tela-venda { display: none; width: 100%; max-width: 1200px; margin-top: 20px; }
+
+        /* Interface de Venda */
+        #tela-venda { display: none; max-width: 1200px; margin: 0 auto; grid-template-columns: 1fr 350px; gap: 20px; }
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; height: 80vh; overflow-y: auto; }
+        .card-prod { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .card-prod:hover { border-color: #28a745; background: #252525; }
+        .card-prod img { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; }
+        .carrinho { background: #1e1e1e; border-left: 2px solid #333; padding: 20px; display: flex; flex-direction: column; height: 85vh; }
+        .item-carrinho { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .total-area { margin-top: auto; font-size: 1.5rem; font-weight: bold; color: #28a745; border-top: 2px solid #333; padding-top: 10px; }
+        .btn-confirmar { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-voltar { background: #444; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <script>
-        if (!sessionStorage.getItem('sessao_autenticada')) { window.location.href = 'index.html'; }
-    </script>
-
-    <h1 id="main-title" style="color: #444;">SISTEMA CENTRAL V4.0</h1>
+    <h1 id="main-title" style="text-align: center; color: #444;">SISTEMA CENTRAL V4.0</h1>
     
     <div id="menu-principal">
-        <div class="big-btn" id="btn-vender-ui" onclick="abrirVenda()"><span>VENDER</span></div>
-        <a href="analizar.html" class="big-btn" id="btn-analisar-link"><span>ANALISAR</span></a>
-        <a href="cadastrar.html" class="big-btn" id="btn-cadastrar-link"><span>CADASTRAR ITENS</span></a>
+        <div class="big-btn" id="btn-vender-ui" onclick="abrirVenda()"><span>VENDER (1)</span></div>
+        <a href="analizar.html" class="big-btn" id="btn-analisar-link"><span>ANALISAR (2)</span></a>
+        <a href="cadastrar.html" class="big-btn" id="btn-cadastrar-link"><span>CADASTRAR (3)</span></a>
     </div>
 
     <div id="tela-venda">
-        <h2>INTERFACE DE VENDA RÁPIDA</h2>
-        <button onclick="fecharVenda()" style="padding:10px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">VOLTAR (ESC)</button>
-        <p>Aqui entrará sua lógica de PDV que não pode esperar carregar.</p>
+        <div>
+            <button class="btn-voltar" onclick="fecharVenda()">← VOLTAR (ESC)</button>
+            <div class="grid-produtos" id="lista-venda-produtos"></div>
+        </div>
+        <div class="carrinho">
+            <h3>CARRINHO</h3>
+            <div id="itens-carrinho" style="flex-grow: 1; overflow-y: auto;"></div>
+            <div class="total-area">TOTAL: R$ <span id="valor-total">0.00</span></div>
+            <button class="btn-confirmar" onclick="finalizarVenda()">FINALIZAR VENDA (F2)</button>
+        </div>
     </div>
 
-    <script>
-        function abrirVenda() {
-            document.getElementById('menu-principal').classList.add('hidden');
-            document.getElementById('main-title').classList.add('hidden');
-            document.getElementById('tela-venda').style.display = 'block';
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", authDomain: "ebooklandia-f041aa.firebaseapp.com", projectId: "ebooklandia-f041aa", 
+            storageBucket: "ebooklandia-f041aa.firebasestorage.app", messagingSenderId: "316525003872", appId: "1:316525003872:web:5327dac57baabdd3792f05" 
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let carrinho = [];
+        let produtosLocal = [];
+
+        // Carregar produtos para venda
+        onSnapshot(collection(db, "produtos"), (snap) => {
+            const container = document.getElementById('lista-venda-produtos');
+            container.innerHTML = "";
+            produtosLocal = [];
+            snap.forEach(d => {
+                const p = d.data();
+                const id = d.id;
+                produtosLocal.push({id, ...p});
+                container.innerHTML += `
+                    <div class="card-prod" onclick="adicionarAoCarrinho('${id}')">
+                        <img src="${p.imagem || 'https://via.placeholder.com/100'}">
+                        <div style="font-weight:bold; margin-top:5px;">${p.nome}</div>
+                        <div style="color:#28a745">R$ ${p.preco.toFixed(2)}</div>
+                        <div style="font-size:12px; color:#888">Estoque: ${p.estoque}</div>
+                    </div>`;
+            });
+        });
+
+        window.adicionarAoCarrinho = (id) => {
+            const prod = produtosLocal.find(p => p.id === id);
+            if(prod.estoque <= 0) return alert("Produto sem estoque!");
+            carrinho.push(prod);
+            atualizarInterfaceCarrinho();
+        };
+
+        function atualizarInterfaceCarrinho() {
+            const container = document.getElementById('itens-carrinho');
+            const totalEl = document.getElementById('valor-total');
+            container.innerHTML = "";
+            let total = 0;
+            carrinho.forEach((item, index) => {
+                total += item.preco;
+                container.innerHTML += `
+                    <div class="item-carrinho">
+                        <span>${item.nome}</span>
+                        <span>R$ ${item.preco.toFixed(2)} <button onclick="removerDoCarrinho(${index})" style="background:none; border:none; color:red; cursor:pointer">X</button></span>
+                    </div>`;
+            });
+            totalEl.innerText = total.toFixed(2);
         }
 
-        function fecharVenda() {
+        window.removerDoCarrinho = (index) => {
+            carrinho.splice(index, 1);
+            atualizarInterfaceCarrinho();
+        };
+
+        window.finalizarVenda = async () => {
+            if(carrinho.length === 0) return alert("Carrinho vazio!");
+            
+            try {
+                for(let item of carrinho) {
+                    // 1. Salva na coleção de vendas
+                    await addDoc(collection(db, "vendas"), {
+                        nome: item.nome,
+                        quantidade: 1,
+                        total: item.preco,
+                        data: serverTimestamp()
+                    });
+                    // 2. Diminui o estoque
+                    const prodRef = doc(db, "produtos", item.id);
+                    await updateDoc(prodRef, {
+                        estoque: increment(-1)
+                    });
+                }
+                alert("Venda realizada com sucesso!");
+                carrinho = [];
+                atualizarInterfaceCarrinho();
+                fecharVenda();
+            } catch(e) { alert("Erro ao processar venda."); }
+        };
+
+        window.abrirVenda = () => {
+            document.getElementById('menu-principal').classList.add('hidden');
+            document.getElementById('main-title').classList.add('hidden');
+            document.getElementById('tela-venda').style.display = 'grid';
+        };
+
+        window.fecharVenda = () => {
             document.getElementById('tela-venda').style.display = 'none';
             document.getElementById('menu-principal').classList.remove('hidden');
             document.getElementById('main-title').classList.remove('hidden');
-        }
+        };
 
         document.addEventListener('keydown', (e) => {
-            const vendaAberta = document.getElementById('tela-venda').style.display === 'block';
-            
-            if (!vendaAberta) {
+            if (document.getElementById('tela-venda').style.display === 'grid') {
+                if (e.key === 'Escape') fecharVenda();
+                if (e.key === 'F2') finalizarVenda();
+            } else {
                 if (e.key === '1' || e.code === 'Numpad1') abrirVenda();
                 if (e.key === '2' || e.code === 'Numpad2') window.location.href = 'analizar.html';
                 if (e.key === '3' || e.code === 'Numpad3') window.location.href = 'cadastrar.html';
-            } else {
-                if (e.key === 'Escape') fecharVenda();
             }
         });
     </script>
