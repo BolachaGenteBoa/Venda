@@ -26,7 +26,7 @@
         td { padding: 8px; border-bottom: 1px solid #222; }
         .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
         #search-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; padding: 5px; }
-        .api-img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
+        .api-img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
         .api-img:hover { border-color: #007bff; }
         .hidden { display: none !important; }
         ::-webkit-scrollbar { width: 5px; }
@@ -65,7 +65,7 @@
         <div class="col col-search">
             <h3 style="margin-top:0">Busca de Fotos</h3>
             <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="Pesquisar imagem...">
+                <input type="text" id="search-input" placeholder="Ex: feijão, arroz, iphone...">
                 <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
             </div>
             <div id="search-results"></div>
@@ -91,11 +91,11 @@
                 await addDoc(collection(db, "produtos"), { nome: n, preco: parseFloat(p), estoque: parseInt(e)||0, imagem: i, data: serverTimestamp() });
                 document.getElementById('prod-nome').value=""; document.getElementById('prod-preco').value=""; 
                 document.getElementById('prod-estoque').value=""; document.getElementById('prod-img').value="";
-            } catch(e) { alert("Erro!"); }
+            } catch(e) { alert("Erro ao salvar!"); }
         }
 
         window.excluirProduto = async function(id) {
-            if(confirm("Deseja excluir este item?")) { await deleteDoc(doc(db, "produtos", id)); }
+            if(confirm("Excluir item?")) { await deleteDoc(doc(db, "produtos", id)); }
         }
 
         onSnapshot(query(collection(db, "produtos"), orderBy("data", "desc")), (snap) => {
@@ -114,33 +114,23 @@
     </script>
 
     <script>
-        async function buscarImagens() {
-            let term = document.getElementById('search-input').value || 'product';
+        function buscarImagens() {
+            let term = document.getElementById('search-input').value || 'item';
             const container = document.getElementById('search-results');
-            container.innerHTML = "Buscando...";
+            container.innerHTML = "";
             
-            // Pixabay API Key estável
-            const key = '44105051-9257d07963d7e8243e8081681';
-            const url = `https://pixabay.com/api/?key=${key}&q=${encodeURIComponent(term)}&image_type=photo&per_page=14`;
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                container.innerHTML = "";
-                
-                if(data.hits.length === 0) { container.innerHTML = "Nada encontrado."; return; }
-
-                data.hits.forEach(img => {
-                    const el = document.createElement('img');
-                    el.src = img.webformatURL;
-                    el.className = 'api-img';
-                    el.onclick = () => { 
-                        document.getElementById('prod-img').value = img.webformatURL;
-                        document.getElementById('prod-img').style.border = "2px solid #28a745";
-                    };
-                    container.appendChild(el);
-                });
-            } catch(e) { container.innerHTML = "Erro na API."; }
+            // MÉTODO SEM API KEY: Usa o redirecionador de busca de imagens do Unsplash/Flickr
+            for(let i=0; i<16; i++) {
+                const imgUrl = `https://loremflickr.com/300/300/${encodeURIComponent(term)}?lock=${i}`;
+                const el = document.createElement('img');
+                el.src = imgUrl;
+                el.className = 'api-img';
+                el.onclick = () => { 
+                    document.getElementById('prod-img').value = imgUrl;
+                    document.getElementById('prod-img').style.border = "2px solid #28a745";
+                };
+                container.appendChild(el);
+            }
         }
 
         document.getElementById('btn-search-api').addEventListener('click', buscarImagens);
