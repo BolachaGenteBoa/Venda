@@ -10,34 +10,24 @@
         .big-btn { flex: 1; height: 100%; border: 2px solid #333; border-radius: 15px; cursor: pointer; background-size: 40%; background-repeat: no-repeat; background-position: center 30%; background-color: #1e1e1e; transition: 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .big-btn:hover { transform: scale(1.02); border-color: #007bff; background-color: #252525; }
         .big-btn span { font-size: 1.5rem; font-weight: bold; text-align: center; text-transform: uppercase; }
-        
         #btn-vender { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png'); }
         #btn-analisar { background-image: url('https://image.pngaaa.com/268/3573268-middle.png'); }
         #btn-cadastrar { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png'); }
-
-        /* LAYOUT 3 COLUNAS */
         .screen-full { display: none; width: 98vw; gap: 15px; height: 85vh; margin-top: 20px; }
         .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        
         .col-form { flex: 1; }
         .col-list { flex: 1; overflow-y: auto; }
         .col-search { flex: 1.2; }
-
         input { width: 100%; padding: 10px; margin: 8px 0; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
         .action-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .exit-btn { background: #dc3545; }
-
-        /* TABELA E IMAGENS */
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { color: #888; border-bottom: 1px solid #333; padding: 8px; text-align: left; }
         td { padding: 8px; border-bottom: 1px solid #222; }
         .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
-
-        /* API SEARCH GRID */
         #search-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; }
         .api-img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
         .api-img:hover { border-color: #007bff; transform: scale(1.05); }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -60,23 +50,21 @@
             <input type="text" id="prod-nome" placeholder="Nome do Produto">
             <input type="number" id="prod-preco" step="0.01" placeholder="Preço (R$)">
             <input type="number" id="prod-estoque" placeholder="Estoque">
-            <input type="text" id="prod-img" placeholder="URL da Imagem (clique na busca)">
+            <input type="text" id="prod-img" placeholder="URL da Imagem">
             <button class="action-btn" onclick="salvarProduto()">SALVAR (ENTER)</button>
             <button class="action-btn exit-btn" onclick="voltarMenu()">SAIR (NumPad 1)</button>
         </div>
 
         <div class="col col-list">
             <h3 style="margin-top:0">Cadastrados</h3>
-            <table>
-                <tbody id="lista-corpo"></tbody>
-            </table>
+            <table><tbody id="lista-corpo"></tbody></table>
         </div>
 
         <div class="col col-search">
-            <h3 style="margin-top:0">Busca de Fotos (API)</h3>
+            <h3 style="margin-top:0">Busca de Fotos</h3>
             <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="Pesquisar foto...">
-                <button onclick="buscarImagens()" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
+                <input type="text" id="search-input" placeholder="Ex: tech, money, product...">
+                <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
             </div>
             <div id="search-results"></div>
         </div>
@@ -96,12 +84,12 @@
         window.salvarProduto = async function() {
             const n = document.getElementById('prod-nome').value, p = document.getElementById('prod-preco').value;
             const e = document.getElementById('prod-estoque').value, i = document.getElementById('prod-img').value;
-            if(!n || !p) return alert("Preencha!");
+            if(!n || !p) return alert("Preencha Nome e Preço!");
             try {
                 await addDoc(collection(db, "produtos"), { nome: n, preco: parseFloat(p), estoque: parseInt(e)||0, imagem: i, data: serverTimestamp() });
                 document.getElementById('prod-nome').value=""; document.getElementById('prod-preco').value=""; 
                 document.getElementById('prod-estoque').value=""; document.getElementById('prod-img').value="";
-            } catch(e) { alert("Erro!"); }
+            } catch(e) { alert("Erro ao salvar!"); }
         }
 
         onSnapshot(query(collection(db, "produtos"), orderBy("data", "desc")), (snap) => {
@@ -115,29 +103,33 @@
     </script>
 
     <script>
-        // API PIXABAY
         async function buscarImagens() {
-            const term = document.getElementById('search-input').value;
-            const key = '44105051-9257d07963d7e8243e8081681'; // Chave pública de teste
-            const url = `https://pixabay.com/api/?key=${key}&q=${encodeURIComponent(term)}&image_type=photo&per_page=12`;
+            const term = document.getElementById('search-input').value || 'items';
+            const key = '48834789-f538354c25988e40188998188'; // Chave Atualizada
+            const url = `https://pixabay.com/api/?key=${key}&q=${encodeURIComponent(term)}&image_type=photo&per_page=18&safesearch=true`;
             
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 const container = document.getElementById('search-results');
                 container.innerHTML = "";
+                
+                if(data.hits.length === 0) { container.innerHTML = "<p style='font-size:12px; color:gray'>Nenhum resultado. Tente em inglês.</p>"; return; }
+
                 data.hits.forEach(img => {
                     const el = document.createElement('img');
                     el.src = img.webformatURL;
                     el.className = 'api-img';
-                    el.onclick = () => {
-                        document.getElementById('prod-img').value = img.webformatURL;
+                    el.onclick = () => { 
+                        document.getElementById('prod-img').value = img.webformatURL; 
                         document.getElementById('prod-img').style.borderColor = "#28a745";
                     };
                     container.appendChild(el);
                 });
-            } catch(e) { console.error("Erro API"); }
+            } catch(e) { console.error("Erro API Pixabay"); }
         }
+
+        document.getElementById('btn-search-api').addEventListener('click', buscarImagens);
 
         function abrirCadastro() { 
             document.getElementById('menu-principal').classList.add('hidden'); 
@@ -151,14 +143,11 @@
         }
         
         document.addEventListener('keydown', (e) => {
-            // ATALHOS NO MENU PRINCIPAL
             if (document.getElementById('tela-cadastro').style.display !== 'flex') {
                 if (e.key === '3') abrirCadastro();
-            } 
-            // ATALHOS DENTRO DO CADASTRO
-            else {
-                if (e.code === 'Numpad1') voltarMenu(); // NUMPAD 1 PARA SAIR
-                if (e.key === 'Enter') salvarProduto(); // ENTER PARA SALVAR
+            } else {
+                if (e.code === 'Numpad1') voltarMenu(); 
+                if (e.key === 'Enter') salvarProduto();
                 if (e.key === 'Escape') voltarMenu();
             }
         });
