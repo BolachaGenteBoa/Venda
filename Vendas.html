@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle - Vendas</title>
+    <style>
+        /* ESTILOS GERAIS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* VERIFICAÇÃO DE LOGIN (Fica invisível, apenas lógica) */
+        .auth-check { display: none; }
+
+        /* MENU PRINCIPAL (3 BOTÕES) */
+        #menu-principal {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            height: 60vh;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .big-btn {
+            flex: 1;
+            height: 100%;
+            border: 2px solid #333;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            background-size: 50%; /* Imagem menor para não estourar */
+            background-repeat: no-repeat;
+            background-position: center 30%; /* Imagem um pouco pra cima */
+            background-color: #1e1e1e;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .big-btn:hover {
+            transform: scale(1.02);
+            border-color: #007bff;
+            background-color: #252525;
+        }
+
+        .big-btn span {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px black;
+            z-index: 2;
+        }
+
+        .shortcut-hint {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* IMAGENS DE FUNDO DOS BOTÕES */
+        #btn-vender {
+            background-image: url('https://static.vecteezy.com/system/resources/thumbnails/075/523/896/small/money-bag-icon-with-dollar-sign-illustration-isolated-on-transparent-background-png.png');
+        }
+
+        #btn-analisar {
+            background-image: url('https://image.pngaaa.com/268/3573268-middle.png');
+        }
+        
+        #btn-cadastrar {
+            background-image: url('https://static.vecteezy.com/system/resources/thumbnails/055/058/698/small/a-clean-and-minimalistic-white-cross-symbol-against-a-plain-background-png.png');
+        }
+
+        /* TELA DE CADASTRO (A ÚNICA QUE PEDIU PRA FAZER A LÓGICA AGORA) */
+        .screen-section {
+            width: 100%;
+            max-width: 600px;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            display: none; /* Escondido por padrão */
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #aaa; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Importante para não quebrar layout */
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .action-btn:hover { background: #218838; }
+
+        .back-btn {
+            background: #444;
+            margin-top: 10px;
+        }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <script>
+        // Verifica se existe a sessão. Se não existir, chuta para o index.html
+        if (!sessionStorage.getItem('sessao_autenticada')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <h1 style="color: #444;">SISTEMA CENTRAL V4.0</h1>
+
+    <div id="menu-principal">
+        <div class="big-btn" id="btn-vender" onclick="alert('Funcionalidade VENDER em breve!')">
+            <span>VENDER</span>
+            <div class="shortcut-hint">[ NumLock 1 ]</div>
+        </div>
+
+        <div class="big-btn" id="btn-analisar" onclick="alert('Funcionalidade ANALISAR em breve!')">
+            <span>ANALISAR VENDAS</span>
+            <div class="shortcut-hint">[ NumLock 2 ]</div>
+        </div>
+
+        <div class="big-btn" id="btn-cadastrar" onclick="abrirCadastro()">
+            <span>CADASTRAR ITENS</span>
+            <div class="shortcut-hint">[ NumLock 3 ]</div>
+        </div>
+    </div>
+
+    <div id="tela-cadastro" class="screen-section">
+        <h2 style="text-align: center; color: #007bff;">Novo Produto</h2>
+        
+        <div class="form-group">
+            <label>Nome do Produto:</label>
+            <input type="text" id="prod-nome" placeholder="Ex: E-book de Marketing">
+        </div>
+
+        <div class="form-group">
+            <label>Preço (R$):</label>
+            <input type="number" id="prod-preco" step="0.01" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+            <label>Estoque (Quantidade):</label>
+            <input type="number" id="prod-estoque" placeholder="10">
+        </div>
+
+        <div class="form-group">
+            <label>URL da Imagem (Opcional):</label>
+            <input type="text" id="prod-img" placeholder="https://...">
+        </div>
+
+        <button class="action-btn" onclick="salvarProduto()">SALVAR NO BANCO DE DADOS</button>
+        <button class="action-btn back-btn" onclick="voltarMenu()">VOLTAR (ESC)</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8",
+            authDomain: "ebooklandia-f041aa.firebaseapp.com",
+            projectId: "ebooklandia-f041aa",
+            storageBucket: "ebooklandia-f041aa.firebasestorage.app",
+            messagingSenderId: "316525003872",
+            appId: "1:316525003872:web:5327dac57baabdd3792f05",
+            measurementId: "G-MWMF7NW7EH"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // FUNÇÃO PARA SALVAR PRODUTO NO FIREBASE
+        window.salvarProduto = async function() {
+            const nome = document.getElementById('prod-nome').value;
+            const preco = parseFloat(document.getElementById('prod-preco').value);
+            const estoque = parseInt(document.getElementById('prod-estoque').value);
+            const img = document.getElementById('prod-img').value;
+
+            if(!nome || !preco) return alert("Preencha nome e preço!");
+
+            try {
+                const btn = document.querySelector('.action-btn');
+                btn.innerText = "Salvando...";
+                btn.disabled = true;
+
+                await addDoc(collection(db, "produtos"), {
+                    nome: nome,
+                    preco: preco,
+                    estoque: estoque || 0,
+                    imagem: img,
+                    data_cadastro: serverTimestamp()
+                });
+
+                alert("Produto Cadastrado com Sucesso!");
+                
+                // Limpar campos
+                document.getElementById('prod-nome').value = "";
+                document.getElementById('prod-preco').value = "";
+                document.getElementById('prod-estoque').value = "";
+                document.getElementById('prod-img').value = "";
+                
+                btn.innerText = "SALVAR NO BANCO DE DADOS";
+                btn.disabled = false;
+                document.getElementById('prod-nome').focus(); // Foca no primeiro campo para cadastrar o próximo
+
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao conectar com Firebase: " + e.message);
+                document.querySelector('.action-btn').disabled = false;
+            }
+        }
+    </script>
+
+    <script>
+        // Funções de Navegação
+        function abrirCadastro() {
+            document.getElementById('menu-principal').classList.add('hidden');
+            document.getElementById('tela-cadastro').style.display = 'block';
+            document.getElementById('prod-nome').focus();
+        }
+
+        function voltarMenu() {
+            document.getElementById('tela-cadastro').style.display = 'none';
+            document.getElementById('menu-principal').classList.remove('hidden');
+        }
+
+        // --- SISTEMA DE ATALHOS DO NUMLOCK ---
+        document.addEventListener('keydown', (event) => {
+            const code = event.code;
+            const key = event.key;
+
+            // Debug para você ver qual tecla está apertando (opcional)
+            // console.log("Tecla: " + code);
+
+            // Se estiver na tela principal
+            if (!document.getElementById('menu-principal').classList.contains('hidden')) {
+                // NumPad 1 -> Vender
+                if (code === 'Numpad1' || key === '1') {
+                    document.getElementById('btn-vender').click();
+                }
+                // NumPad 2 -> Analisar
+                if (code === 'Numpad2' || key === '2') {
+                    document.getElementById('btn-analisar').click();
+                }
+                // NumPad 3 -> Cadastrar
+                if (code === 'Numpad3' || key === '3') {
+                    abrirCadastro();
+                }
+            }
+            // Se estiver dentro de alguma tela (Cadastro)
+            else {
+                // ESC -> Voltar
+                if (code === 'Escape') {
+                    voltarMenu();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
