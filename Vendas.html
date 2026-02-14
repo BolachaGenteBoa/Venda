@@ -16,17 +16,18 @@
         .screen-full { display: none; width: 98vw; gap: 15px; height: 85vh; margin-top: 20px; }
         .col { background: #1e1e1e; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid #333; }
         .col-form { flex: 0.8; }
-        .col-list { flex: 1; overflow-y: auto; }
-        .col-search { flex: 1.5; }
+        .col-list { flex: 1.2; overflow-y: auto; }
+        .col-search { flex: 1.2; }
         input { width: 100%; padding: 10px; margin: 8px 0; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
         .action-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .exit-btn { background: #dc3545; }
+        .del-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-weight: bold; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         td { padding: 8px; border-bottom: 1px solid #222; }
         .img-prev { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
-        #search-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; padding: 5px; }
-        .api-img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
-        .api-img:hover { border-color: #007bff; transform: scale(1.05); }
+        #search-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; margin-top: 10px; padding: 5px; }
+        .api-img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #2a2a2a; }
+        .api-img:hover { border-color: #007bff; }
         .hidden { display: none !important; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
@@ -57,14 +58,14 @@
         </div>
 
         <div class="col col-list">
-            <h3 style="margin-top:0">Cadastrados</h3>
+            <h3 style="margin-top:0">Produtos no Banco</h3>
             <table><tbody id="lista-corpo"></tbody></table>
         </div>
 
         <div class="col col-search">
             <h3 style="margin-top:0">Busca de Fotos</h3>
             <div style="display:flex; gap:5px">
-                <input type="text" id="search-input" placeholder="O que você procura?">
+                <input type="text" id="search-input" placeholder="Pesquisar imagem...">
                 <button id="btn-search-api" style="background:#007bff; border:none; color:white; border-radius:5px; padding:0 15px; cursor:pointer">Ir</button>
             </div>
             <div id="search-results"></div>
@@ -73,7 +74,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, addDoc, deleteDoc, doc, collection, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = { 
             apiKey: "AIzaSyATu9zkykXFpiTD2Mlh5Ee6qroDC1tefi8", authDomain: "ebooklandia-f041aa.firebaseapp.com", projectId: "ebooklandia-f041aa", 
@@ -90,38 +91,56 @@
                 await addDoc(collection(db, "produtos"), { nome: n, preco: parseFloat(p), estoque: parseInt(e)||0, imagem: i, data: serverTimestamp() });
                 document.getElementById('prod-nome').value=""; document.getElementById('prod-preco').value=""; 
                 document.getElementById('prod-estoque').value=""; document.getElementById('prod-img').value="";
-            } catch(e) { alert("Erro ao salvar!"); }
+            } catch(e) { alert("Erro!"); }
+        }
+
+        window.excluirProduto = async function(id) {
+            if(confirm("Deseja excluir este item?")) { await deleteDoc(doc(db, "produtos", id)); }
         }
 
         onSnapshot(query(collection(db, "produtos"), orderBy("data", "desc")), (snap) => {
             const corpo = document.getElementById('lista-corpo');
             corpo.innerHTML = "";
-            snap.forEach(doc => {
-                const item = doc.data();
-                corpo.innerHTML += `<tr><td><img src="${item.imagem||'https://via.placeholder.com/35'}" class="img-prev"></td><td>${item.nome}</td><td>R$ ${parseFloat(item.preco).toFixed(2)}</td></tr>`;
+            snap.forEach(d => {
+                const item = d.data();
+                corpo.innerHTML += `<tr>
+                    <td><img src="${item.imagem||'https://via.placeholder.com/35'}" class="img-prev"></td>
+                    <td>${item.nome}</td>
+                    <td>R$ ${parseFloat(item.preco).toFixed(2)}</td>
+                    <td><button class="del-btn" onclick="excluirProduto('${d.id}')">×</button></td>
+                </tr>`;
             });
         });
     </script>
 
     <script>
-        function buscarImagens() {
+        async function buscarImagens() {
             let term = document.getElementById('search-input').value || 'product';
             const container = document.getElementById('search-results');
-            container.innerHTML = "";
+            container.innerHTML = "Buscando...";
             
-            // Gerador de imagens via Google/Unsplash redirects
-            for(let i=0; i<21; i++) {
-                const imgUrl = `https://source.unsplash.com/featured/300x300?${encodeURIComponent(term)}&sig=${i}`;
-                const el = document.createElement('img');
-                el.src = imgUrl;
-                el.className = 'api-img';
-                el.loading = "lazy";
-                el.onclick = () => { 
-                    document.getElementById('prod-img').value = imgUrl; 
-                    document.getElementById('prod-img').style.borderColor = "#28a745";
-                };
-                container.appendChild(el);
-            }
+            // Pixabay API Key estável
+            const key = '44105051-9257d07963d7e8243e8081681';
+            const url = `https://pixabay.com/api/?key=${key}&q=${encodeURIComponent(term)}&image_type=photo&per_page=14`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                container.innerHTML = "";
+                
+                if(data.hits.length === 0) { container.innerHTML = "Nada encontrado."; return; }
+
+                data.hits.forEach(img => {
+                    const el = document.createElement('img');
+                    el.src = img.webformatURL;
+                    el.className = 'api-img';
+                    el.onclick = () => { 
+                        document.getElementById('prod-img').value = img.webformatURL;
+                        document.getElementById('prod-img').style.border = "2px solid #28a745";
+                    };
+                    container.appendChild(el);
+                });
+            } catch(e) { container.innerHTML = "Erro na API."; }
         }
 
         document.getElementById('btn-search-api').addEventListener('click', buscarImagens);
@@ -138,16 +157,14 @@
         }
         
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('tela-cadastro').style.display !== 'flex') {
-                if (e.key === '3') abrirCadastro();
-            } else {
+            if (document.getElementById('tela-cadastro').style.display === 'flex') {
                 if (e.code === 'Numpad1') { e.preventDefault(); voltarMenu(); }
                 if (e.key === 'Enter') {
                     if(document.activeElement.id === 'search-input') buscarImagens();
                     else salvarProduto();
                 }
                 if (e.key === 'Escape') voltarMenu();
-            }
+            } else if (e.key === '3') abrirCadastro();
         });
     </script>
 </body>
