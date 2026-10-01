@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coisas da Samirah - Gestão de Vendas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Authentication Modal / Screen -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center border border-slate-100">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 mb-1">Coisas da Samirah</h1>
+            <p class="text-slate-500 text-sm mb-6">Selecione seu perfil para entrar no sistema</p>
+            
+            <div id="user-buttons" class="grid grid-cols-2 gap-3 mb-4">
+                <!-- Dynamically populated or static fast buttons -->
+                <button onclick="selectUser('Francisco', 'F', 'bg-emerald-500')" class="p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-lg shadow-md group-hover:scale-105 transition-transform">F</div>
+                    <span class="font-semibold text-slate-700">Francisco</span>
+                </button>
+                <button onclick="selectUser('Rosinha', 'R', 'bg-rose-500')" class="p-4 rounded-xl border-2 border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center text-lg shadow-md group-hover:scale-105 transition-transform">R</div>
+                    <span class="font-semibold text-slate-700">Rosinha</span>
+                </button>
+                <button onclick="selectUser('Samirah', 'S', 'bg-blue-500')" class="p-4 rounded-xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-lg shadow-md group-hover:scale-105 transition-transform">S</div>
+                    <span class="font-semibold text-slate-700">Samirah</span>
+                </button>
+                <button onclick="selectUser('Tyago', 'T', 'bg-amber-500')" class="p-4 rounded-xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-md group-hover:scale-105 transition-transform">T</div>
+                    <span class="font-semibold text-slate-700">Tyago</span>
+                </button>
+            </div>
+            <div id="auth-status" class="text-xs text-slate-400 mt-2">Detectando IP e sessão salva...</div>
+        </div>
+    </div>
+
+    <!-- Header Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-basket-shopping"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-lg leading-tight">Coisas da Samirah</h1>
+                    <p class="text-xs text-slate-500">Gestão de Vendas e Fiados</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <div id="logged-user-badge" class="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    <div id="nav-user-avatar" class="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">S</div>
+                    <span id="nav-user-name" class="text-sm font-semibold text-slate-700">Samirah</span>
+                </div>
+                <button onclick="logout()" title="Trocar Usuário" class="p-2 text-slate-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-50 border-t border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 flex space-x-1 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" class="tab-btn px-4 py-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('vender')" class="tab-btn px-4 py-3 text-sm font-semibold text-slate-600 hover:text-blue-600 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-cash-register"></i><span>Vender</span>
+                </button>
+                <button onclick="switchTab('produtos')" class="tab-btn px-4 py-3 text-sm font-semibold text-slate-600 hover:text-blue-600 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-boxes-stacked"></i><span>Produtos</span>
+                </button>
+                <button onclick="switchTab('editar')" class="tab-btn px-4 py-3 text-sm font-semibold text-slate-600 hover:text-blue-600 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-pen-to-square"></i><span>Editar</span>
+                </button>
+                <button onclick="switchTab('fiado')" class="tab-btn px-4 py-3 text-sm font-semibold text-slate-600 hover:text-blue-600 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-book-bookmark"></i><span>Fiado</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+        <!-- TAB: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content active space-y-6">
+            <!-- Top Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Vendido</p>
+                        <h3 id="dash-total-sales" class="text-2xl font-bold text-slate-900">R$ 0,00</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Vendas Realizadas</p>
+                        <h3 id="dash-sales-count" class="text-2xl font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Total em Fiados</p>
+                        <h3 id="dash-total-fiado" class="text-2xl font-bold text-slate-900">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendas por Funcionário & Gráfico -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Vendas por Vendedor -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1 space-y-4">
+                    <h3 class="font-bold text-slate-900 text-base flex items-center justify-between">
+                        <span>VENDAS</span>
+                        <i class="fa-solid fa-users text-slate-400 text-sm"></i>
+                    </h3>
+                    <div id="seller-progress-container" class="space-y-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Gráfico de Pizza / Analytics -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 space-y-4 flex flex-col">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-slate-900 text-base">Desempenho por Período</h3>
+                        <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-medium">
+                            <button onclick="setChartPeriod('dia')" id="btn-period-dia" class="px-3 py-1 rounded-md bg-white text-blue-600 shadow-sm transition-all">Dia</button>
+                            <button onclick="setChartPeriod('semana')" id="btn-period-semana" class="px-3 py-1 rounded-md text-slate-600 transition-all">Semana</button>
+                            <button onclick="setChartPeriod('hora')" id="btn-period-hora" class="px-3 py-1 rounded-md text-slate-600 transition-all">Hora</button>
+                        </div>
+                    </div>
+                    <div class="relative flex-1 w-full min-h-[260px] flex items-center justify-center">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos Mais Vendidos / Estoque Atual -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <h3 class="font-bold text-slate-900 text-base flex items-center justify-between">
+                    <span>Produtos Mais Vendidos & Estoque</span>
+                    <span class="text-xs text-slate-400 font-normal">Sincronizado em tempo real</span>
+                </h3>
+                <div id="dash-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: VENDER -->
+        <div id="tab-vender" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Products to sell -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-slate-900">Selecionar Produtos</h2>
+                        <div class="relative">
+                            <input type="text" id="search-pos" oninput="filterPOSProducts()" placeholder="Buscar produto..." class="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 w-48 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+                    <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Cart & Checkout -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-fit sticky top-20 space-y-4">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center justify-between">
+                        <span>Carrinho</span>
+                        <button onclick="clearCart()" class="text-xs text-rose-500 hover:underline">Limpar</button>
+                    </h2>
+                    
+                    <div id="cart-items" class="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                        <p class="text-sm text-slate-400 text-center py-6">Carrinho vazio</p>
+                    </div>
+
+                    <div class="border-t border-slate-200 pt-4 space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Itens</span>
+                            <span id="cart-count" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold">
+                            <span>Total</span>
+                            <span id="cart-total" class="text-blue-600">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="space-y-2 pt-2">
+                        <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Forma de Pagamento</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setPaymentMethod('Dinheiro/Pix')" id="pay-dinheiro" class="py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 text-sm font-semibold flex items-center justify-center space-x-2 transition-all">
+                                <i class="fa-solid fa-money-bill-wave"></i><span>À Vista</span>
+                            </button>
+                            <button onclick="setPaymentMethod('Fiado')" id="pay-fiado" class="py-2.5 px-3 rounded-xl border-2 border-slate-200 text-slate-600 text-sm font-semibold flex items-center justify-center space-x-2 transition-all">
+                                <i class="fa-solid fa-book"></i><span>Fiado</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fiado Customer Name -->
+                    <div id="fiado-customer-container" class="space-y-1 hidden">
+                        <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Nome do Cliente (Fiado)</label>
+                        <input type="text" id="fiado-customer-name" placeholder="Ex: João da Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <button onclick="finalizeSale()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-check"></i><span>Finalizar Venda</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PRODUTOS -->
+        <div id="tab-produtos" class="tab-content space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Catálogo de Produtos</h2>
+                    <p class="text-xs text-slate-500">Lista completa dos itens da Samirah</p>
+                </div>
+                <div class="relative">
+                    <input type="text" id="search-catalog" oninput="filterCatalogProducts()" placeholder="Pesquisar..." class="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 w-48 sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
+            <div id="catalog-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- TAB: EDITAR -->
+        <div id="tab-editar" class="tab-content space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Gerenciar Produtos</h2>
+                    <p class="text-xs text-slate-500">Adicione novos itens ou edite preços, estoque e imagens</p>
+                </div>
+                <button onclick="openProductModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus"></i><span>Novo Produto</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase font-semibold">
+                                <th class="p-4">Produto</th>
+                                <th class="p-4">Preço Venda</th>
+                                <th class="p-4">Estoque</th>
+                                <th class="p-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="edit-products-table" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: FIADO -->
+        <div id="tab-fiado" class="tab-content space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Controle de Fiados</h2>
+                    <p class="text-xs text-slate-500">Clientes com contas pendentes</p>
+                </div>
+                <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                    Total em Fiado: <span id="fiado-tab-total" class="font-bold text-rose-600">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div id="fiado-customers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Product Edit/Add Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-100">
+            <h3 id="modal-title" class="text-lg font-bold text-slate-900">Editar Produto</h3>
+            <input type="hidden" id="modal-product-id">
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase">Nome do Produto</label>
+                    <input type="text" id="modal-name" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 mt-1">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 uppercase">Preço Venda (R$)</label>
+                        <input type="number" step="0.01" id="modal-price" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 uppercase">Estoque</label>
+                        <input type="number" id="modal-stock" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 mt-1">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase">URL da Imagem</label>
+                    <input type="text" id="modal-image" placeholder="https://..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 mt-1">
+                    <p class="text-[10px] text-slate-400 mt-1">Insira o link de uma imagem válida ou deixe padrão.</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-3 pt-2">
+                <button onclick="closeProductModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all">Cancelar</button>
+                <button onclick="saveProductModal()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-500/20">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 text-sm">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">Operação realizada com sucesso!</span>
+    </div>
+
+    <!-- Firebase SDKs & App Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, deleteDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Environment variables provided by runtime
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'coisas-da-samirah-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyMockKeyForDevelopment",
+            authDomain: "ebooklandia-f041a.firebaseapp.com",
+            projectId: "ebooklandia-f041a",
+            storageBucket: "ebooklandia-f041a.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Initial Samirah Product List
+        const initialProducts = [
+            { id: "sam-1", name: "Baré", stock: 10, price: 7.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Bare" },
+            { id: "sam-2", name: "Coca-Cola 2Lt", stock: 5, price: 12.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Coca-Cola+2L" },
+            { id: "sam-3", name: "Coca-Cola Zero 2Lt", stock: 2, price: 12.50, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Coca+Zero+2L" },
+            { id: "sam-4", name: "Coca-Cola 2,5Lt", stock: 3, price: 14.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Coca+2.5L" },
+            { id: "sam-5", name: "Sprite 2Lt", stock: 1, price: 11.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Sprite+2L" },
+            { id: "sam-6", name: "Fanta Uva 2Lt", stock: 3, price: 11.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Fanta+Uva" },
+            { id: "sam-7", name: "Fanta Laranja 2Lt", stock: 1, price: 11.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Fanta+Laranja" },
+            { id: "sam-8", name: "Skarloff", stock: 6, price: 6.50, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Skarloff" },
+            { id: "sam-9", name: "Óleo de Cozinha", stock: 8, price: 9.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Oleo" },
+            { id: "sam-10", name: "Café Kimimo", stock: 2, price: 17.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Cafe+Kimimo" },
+            { id: "sam-11", name: "Café Santa Clara", stock: 3, price: 17.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Cafe+Santa+Clara" },
+            { id: "sam-12", name: "Veja", stock: 3, price: 5.50, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Veja" },
+            { id: "sam-13", name: "Sukita", stock: 3, price: 7.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Sukita" },
+            { id: "sam-14", name: "Fralda (Pct 2 un)", stock: 2, price: 2.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Fralda+2un" },
+            { id: "sam-15", name: "Fralda (Pct 1 un)", stock: 1, price: 3.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Fralda+1un" },
+            { id: "sam-16", name: "Lava Roupas Líquido", stock: 2, price: 9.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Lava+Roupas" },
+            { id: "sam-17", name: "Lucky Strike (Cart. Fechada)", stock: 8, price: 40.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Lucky+Carteira" },
+            { id: "sam-18", name: "Lucky Strike (Unidade)", stock: 40, price: 1.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Lucky+Unidade" },
+            { id: "sam-19", name: "Leite Ninho (Lata)", stock: 3, price: 22.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Leite+Ninho" },
+            { id: "sam-20", name: "Cartela de Ovo", stock: 30, price: 1.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Ovo+Unidade" },
+            { id: "sam-21", name: "Salsicha", stock: 10, price: 1.00, image: "https://placehold.co/300x300/f1f5f9/1e293b?text=Salsicha" }
+        ];
+
+        // Global State
+        let currentUser = null;
+        let products = [];
+        let sales = [];
+        let fiados = [];
+        let cart = [];
+        let paymentMethod = 'Dinheiro/Pix';
+        let chartPeriod = 'dia';
+        let salesChartInstance = null;
+
+        // Authentication & IP Detection
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth error:", e);
+            }
+
+            // Check IP / Cookie
+            let savedUser = localStorage.getItem('samirah_user');
+            let savedAvatar = localStorage.getItem('samirah_avatar');
+            let savedColor = localStorage.getItem('samirah_color');
+
+            // Try fetching IP
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                const ip = data.ip;
+                const ipUserKey = `samirah_ip_${ip}`;
+                const ipSaved = localStorage.getItem(ipUserKey);
+                if (ipSaved) {
+                    const parsed = JSON.parse(ipSaved);
+                    savedUser = parsed.name;
+                    savedAvatar = parsed.avatar;
+                    savedColor = parsed.color;
+                }
+            } catch (err) {
+                console.log("IP fetch failed, using local storage session");
+            }
+
+            if (savedUser) {
+                completeLogin(savedUser, savedAvatar, savedColor);
+            } else {
+                document.getElementById('auth-status').innerText = 'Por favor, selecione seu usuário abaixo:';
+            }
+
+            // Start Firebase Listeners once auth is ready
+            setupFirebaseListeners();
+        }
+
+        window.selectUser = function(name, avatar, color) {
+            localStorage.setItem('samirah_user', name);
+            localStorage.setItem('samirah_avatar', avatar);
+            localStorage.setItem('samirah_color', color);
+            
+            // Try saving with IP
+            fetch('https://api.ipify.org?format=json')
+                .then(r => r.json())
+                .then(d => {
+                    localStorage.setItem(`samirah_ip_${d.ip}`, JSON.stringify({name, avatar, color}));
+                }).catch(()=>{});
+
+            completeLogin(name, avatar, color);
+        }
+
+        function completeLogin(name, avatar, color) {
+            currentUser = { name, avatar, color };
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('nav-user-name').innerText = name;
+            const avatarEl = document.getElementById('nav-user-avatar');
+            avatarEl.innerText = avatar;
+            avatarEl.className = `w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center ${color}`;
+            showToast(`Bem-vindo(a), ${name}!`);
+        }
+
+        window.logout = function() {
+            localStorage.removeItem('samirah_user');
+            localStorage.removeItem('samirah_avatar');
+            localStorage.removeItem('samirah_color');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        // Firebase Firestore Realtime Listeners
+        function setupFirebaseListeners() {
+            if (!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+
+            // Products Listener
+            const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+            onSnapshot(productsRef, (snapshot) => {
+                if (snapshot.empty) {
+                    // Seed initial products if empty
+                    initialProducts.forEach(p => {
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id), p);
+                    });
+                } else {
+                    products = [];
+                    snapshot.forEach(docSnap => {
+                        products.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    renderAll();
+                }
+            }, (error) => {
+                console.error("Products error:", error);
+                // Fallback to initial if offline/error
+                if (products.length === 0) {
+                    products = initialProducts;
+                    renderAll();
+                }
+            });
+
+            // Sales Listener
+            const salesRef = collection(db, 'artifacts', appId, 'public', 'data', 'sales');
+            onSnapshot(salesRef, (snapshot) => {
+                sales = [];
+                snapshot.forEach(docSnap => {
+                    sales.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderDashboard();
+            }, (error) => { console.error("Sales error:", error); });
+
+            // Fiados Listener
+            const fiadosRef = collection(db, 'artifacts', appId, 'public', 'data', 'fiados');
+            onSnapshot(fiadosRef, (snapshot) => {
+                fiados = [];
+                snapshot.forEach(docSnap => {
+                    fiados.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderFiados();
+            }, (error) => { console.error("Fiados error:", error); });
+        }
+
+        // Navigation Tabs
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-blue-600');
+                btn.classList.add('text-slate-600', 'border-transparent');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            event.currentTarget.classList.remove('text-slate-600', 'border-transparent');
+            event.currentTarget.classList.add('text-blue-600', 'border-blue-600');
+        }
+
+        // Render All UI Components
+        function renderAll() {
+            renderDashboard();
+            renderPOSProducts();
+            renderCatalog();
+            renderEditTable();
+            renderFiados();
+        }
+
+        // Render Dashboard
+        function renderDashboard() {
+            let totalSales = sales.reduce((acc, s) => acc + s.total, 0);
+            document.getElementById('dash-total-sales').innerText = formatMoney(totalSales);
+            document.getElementById('dash-sales-count').innerText = sales.length;
+
+            let totalFiado = fiados.reduce((acc, f) => acc + f.amount, 0);
+            document.getElementById('dash-total-fiado').innerText = formatMoney(totalFiado);
+
+            // Seller Progress
+            const sellers = [
+                { name: "Francisco", avatar: "F", color: "bg-emerald-500", border: "border-emerald-500" },
+                { name: "Rosinha", avatar: "R", color: "bg-rose-500", border: "border-rose-500" },
+                { name: "Samirah", avatar: "S", color: "bg-blue-500", border: "border-blue-500" },
+                { name: "Tyago", avatar: "T", color: "bg-amber-500", border: "border-amber-500" }
+            ];
+
+            let sellerTotals = {};
+            sellers.forEach(s => sellerTotals[s.name] = 0);
+            sales.forEach(s => {
+                if (sellerTotals[s.seller] !== undefined) {
+                    sellerTotals[s.seller] += s.total;
+                }
+            });
+
+            let maxSale = Math.max(...Object.values(sellerTotals), 1);
+
+            let sellerHTML = '';
+            sellers.forEach(s => {
+                let total = sellerTotals[s.name];
+                let percent = Math.min(Math.round((total / maxSale) * 100), 100);
+                sellerHTML += `
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-full ${s.color} text-white text-xs font-bold flex items-center justify-center">${s.avatar}</div>
+                                <span class="font-semibold text-slate-700">${s.name}</span>
+                            </div>
+                            <span class="font-bold text-slate-900">${formatMoney(total)}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div class="${s.color} h-2.5 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('seller-progress-container').innerHTML = sellerHTML;
+
+            // Products grid in Dashboard (Most sold & Stock)
+            let dashProdHTML = '';
+            products.forEach(p => {
+                dashProdHTML += `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col items-center text-center space-y-2">
+                        <img src="${p.image}" alt="${p.name}" class="w-16 h-16 object-cover rounded-lg bg-white border border-slate-200" onerror="this.src='https://placehold.co/300x300/f1f5f9/1e293b?text=Produto'">
+                        <div class="w-full">
+                            <h4 class="font-semibold text-slate-800 text-xs truncate" title="${p.name}">${p.name}</h4>
+                            <p class="text-xs text-blue-600 font-bold mt-0.5">${formatMoney(p.price)}</p>
+                            <span class="inline-block px-2 py-0.5 mt-1 bg-white border border-slate-200 text-slate-600 text-[10px] font-semibold rounded-md">Estoque: ${p.stock}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('dash-products-grid').innerHTML = dashProdHTML;
+
+            updateChart();
+        }
+
+        // Chart.js Analytics
+        window.setChartPeriod = function(period) {
+            chartPeriod = period;
+            ['dia', 'semana', 'hora'].forEach(p => {
+                const btn = document.getElementById(`btn-period-${p}`);
+                if (p === period) {
+                    btn.className = "px-3 py-1 rounded-md bg-white text-blue-600 shadow-sm transition-all";
+                } else {
+                    btn.className = "px-3 py-1 rounded-md text-slate-600 transition-all";
+                }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            // Calculate data based on period
+            let labels = [];
+            let dataValues = [];
+            let colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+            if (chartPeriod === 'dia') {
+                labels = ['Francisco', 'Rosinha', 'Samirah', 'Tyago'];
+                let totals = { 'Francisco': 0, 'Rosinha': 0, 'Samirah': 0, 'Tyago': 0 };
+                sales.forEach(s => { if (totals[s.seller] !== undefined) totals[s.seller] += s.total; });
+                dataValues = [totals['Francisco'], totals['Rosinha'], totals['Samirah'], totals['Tyago']];
+            } else if (chartPeriod === 'semana') {
+                labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                dataValues = [120, 240, 180, 310, 450, 520, 390]; // Sample weekly distribution
+                colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981', '#06b6d4'];
+            } else {
+                labels = ['08h - 11h', '11h - 14h', '14h - 17h', '17h - 20h', '20h - 23h'];
+                dataValues = [150, 420, 380, 590, 210];
+                colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+            }
+
+            if (salesChartInstance) {
+                salesChartInstance.destroy();
+            }
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render POS Products
+        function renderPOSProducts() {
+            const query = document.getElementById('search-pos').value.toLowerCase();
+            let html = '';
+            products.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+                html += `
+                    <div onclick="addToCart('${p.id}')" class="bg-white border border-slate-200 hover:border-blue-500 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all hover:shadow-md group">
+                        <div>
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-28 object-cover rounded-lg bg-slate-50 border border-slate-100 mb-2" onerror="this.src='https://placehold.co/300x300/f1f5f9/1e293b?text=Produto'">
+                            <h4 class="font-semibold text-slate-800 text-xs line-clamp-2">${p.name}</h4>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="font-bold text-blue-600 text-sm">${formatMoney(p.price)}</span>
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">Est: ${p.stock}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('pos-products-grid').innerHTML = html || '<p class="col-span-full text-center text-slate-400 py-8 text-sm">Nenhum produto encontrado</p>';
+        }
+
+        window.filterPOSProducts = function() {
+            renderPOSProducts();
+        }
+
+        // Cart Logic
+        window.addToCart = function(productId) {
+            const prod = products.find(p => p.id === productId);
+            if (!prod || prod.stock <= 0) {
+                showToast("Produto sem estoque!", "error");
+                return;
+            }
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.qty < prod.stock) {
+                    existing.qty++;
+                } else {
+                    showToast("Estoque máximo atingido no carrinho", "error");
+                    return;
+                }
+            } else {
+                cart.push({ id: prod.id, name: prod.name, price: prod.price, qty: 1, maxStock: prod.stock });
+            }
+            renderCart();
+        }
+
+        window.updateCartQty = function(productId, delta) {
+            const item = cart.find(i => i.id === productId);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== productId);
+            } else if (item.qty > item.maxStock) {
+                item.qty = item.maxStock;
+                showToast("Estoque máximo atingido", "error");
+            }
+            renderCart();
+        }
+
+        window.clearCart = function() {
+            cart = [];
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Carrinho vazio</p>';
+                document.getElementById('cart-count').innerText = '0';
+                document.getElementById('cart-total').innerText = formatMoney(0);
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+            let count = 0;
+
+            cart.forEach(item => {
+                total += item.price * item.qty;
+                count += item.qty;
+                html += `
+                    py-3 flex items-center justify-between text-sm">
+                        <div class="flex-1 pr-2">
+                            <h5 class="font-semibold text-slate-800 text-xs">${item.name}</h5>
+                            <span class="text-xs text-slate-500">${formatMoney(item.price)} un</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">-</button>
+                            <span class="text-xs font-semibold w-5 text-center">${item.qty}</span>
+                            <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('cart-count').innerText = count;
+            document.getElementById('cart-total').innerText = formatMoney(total);
+        }
+
+        window.setPaymentMethod = function(method) {
+            paymentMethod = method;
+            const btnDinheiro = document.getElementById('pay-dinheiro');
+            const btnFiado = document.getElementById('pay-fiado');
+            const fiadoContainer = document.getElementById('fiado-customer-container');
+
+            if (method === 'Dinheiro/Pix') {
+                btnDinheiro.className = "py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 text-sm font-semibold flex items-center justify-center space-x-2 transition-all";
+                btnFiado.className = "py-2.5 px-3 rounded-xl border-2 border-slate-200 text-slate-600 text-sm font-semibold flex items-center justify-center space-x-2 transition-all";
+                fiadoContainer.classList.add('hidden');
+            } else {
+                btnFiado.className = "py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 text-sm font-semibold flex items-center justify-center space-x-2 transition-all";
+                btnDinheiro.className = "py-2.5 px-3 rounded-xl border-2 border-slate-200 text-slate-600 text-sm font-semibold flex items-center justify-center space-x-2 transition-all";
+                fiadoContainer.classList.remove('hidden');
+            }
+        }
+
+        window.finalizeSale = async function() {
+            if (cart.length === 0) {
+                showToast("Carrinho vazio!", "error");
+                return;
+            }
+
+            let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let customerName = "";
+
+            if (paymentMethod === 'Fiado') {
+                customerName = document.getElementById('fiado-customer-name').value.trim();
+                if (!customerName) {
+                    showToast("Informe o nome do cliente para o fiado!", "error");
+                    return;
+                }
+            }
+
+            // Update product stock in Firestore
+            for (let item of cart) {
+                const prod = products.find(p => p.id === item.id);
+                if (prod) {
+                    let newStock = prod.stock - item.qty;
+                    try {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prod.id), { stock: newStock });
+                    } catch (e) {
+                        console.error("Stock update error:", e);
+                    }
+                }
+            }
+
+            // Record Sale
+            const saleData = {
+                items: cart,
+                total: total,
+                paymentMethod: paymentMethod,
+                customer: customerName || 'À Vista',
+                seller: currentUser ? currentUser.name : 'Samirah',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'sales'), saleData);
+            } catch (e) {
+                console.error("Sale record error:", e);
+            }
+
+            // Record Fiado if applicable
+            if (paymentMethod === 'Fiado') {
+                const existingFiado = fiados.find(f => f.customer.toLowerCase() === customerName.toLowerCase());
+                if (existingFiado) {
+                    try {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fiados', existingFiado.id), {
+                            amount: existingFiado.amount + total,
+                            date: new Date().toISOString()
+                        });
+                    } catch (e) { console.error(e); }
+                } else {
+                    try {
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fiados'), {
+                            customer: customerName,
+                            amount: total,
+                            date: new Date().toISOString()
+                        });
+                    } catch (e) { console.error(e); }
+                }
+            }
+
+            showToast("Venda realizada com sucesso!");
+            cart = [];
+            renderCart();
+            document.getElementById('fiado-customer-name').value = '';
+        }
+
+        // Render Catalog Tab
+        function renderCatalog() {
+            const query = document.getElementById('search-catalog').value.toLowerCase();
+            let html = '';
+            products.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+                html += `
+                    <div class="bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center text-center space-y-2 shadow-sm">
+                        <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg bg-slate-50 border border-slate-100" onerror="this.src='https://placehold.co/300x300/f1f5f9/1e293b?text=Produto'">
+                        <div class="w-full">
+                            <h4 class="font-semibold text-slate-800 text-xs truncate" title="${p.name}">${p.name}</h4>
+                            <p class="text-sm text-blue-600 font-bold mt-1">${formatMoney(p.price)}</p>
+                            <span class="inline-block px-2.5 py-0.5 mt-1 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-md">Estoque: ${p.stock}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('catalog-products-grid').innerHTML = html;
+        }
+
+        window.filterCatalogProducts = function() {
+            renderCatalog();
+        }
+
+        // Render Edit Products Table
+        function renderEditTable() {
+            let html = '';
+            products.forEach(p => {
+                html += `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-4 flex items-center space-x-3">
+                            <img src="${p.image}" alt="${p.name}" class="w-10 h-10 object-cover rounded-lg bg-slate-100 border border-slate-200" onerror="this.src='https://placehold.co/300x300/f1f5f9/1e293b?text=Produto'">
+                            <span class="font-semibold text-slate-800">${p.name}</span>
+                        </td>
+                        <td class="p-4 text-blue-600 font-bold">${formatMoney(p.price)}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-700">${p.stock} un</span></td>
+                        <td class="p-4 text-right space-x-2">
+                            <button onclick="openProductModal('${p.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
+                            <button onclick="deleteProduct('${p.id}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold transition-colors"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('edit-products-table').innerHTML = html;
+        }
+
+        // Modal Product Management
+        window.openProductModal = function(id = null) {
+            const modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+            if (id) {
+                const prod = products.find(p => p.id === id);
+                document.getElementById('modal-title').innerText = "Editar Produto";
+                document.getElementById('modal-product-id').value = prod.id;
+                document.getElementById('modal-name').value = prod.name;
+                document.getElementById('modal-price').value = prod.price;
+                document.getElementById('modal-stock').value = prod.stock;
+                document.getElementById('modal-image').value = prod.image;
+            } else {
+                document.getElementById('modal-title').innerText = "Novo Produto";
+                document.getElementById('modal-product-id').value = "";
+                document.getElementById('modal-name').value = "";
+                document.getElementById('modal-price').value = "";
+                document.getElementById('modal-stock').value = "";
+                document.getElementById('modal-image').value = "";
+            }
+        }
+
+        window.closeProductModal = function() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        window.saveProductModal = async function() {
+            const id = document.getElementById('modal-product-id').value;
+            const name = document.getElementById('modal-name').value.trim();
+            const price = parseFloat(document.getElementById('modal-price').value);
+            const stock = parseInt(document.getElementById('modal-stock').value);
+            const image = document.getElementById('modal-image').value.trim() || 'https://placehold.co/300x300/f1f5f9/1e293b?text=Produto';
+
+            if (!name || isNaN(price) || isNaN(stock)) {
+                showToast("Preencha todos os campos corretamente!", "error");
+                return;
+            }
+
+            if (id) {
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), { name, price, stock, image });
+                    showToast("Produto atualizado com sucesso!");
+                } catch (e) { console.error(e); }
+            } else {
+                const newId = 'prod-' + Date.now();
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', newId), { name, price, stock, image });
+                    showToast("Produto criado com sucesso!");
+                } catch (e) { console.error(e); }
+            }
+            closeProductModal();
+        }
+
+        window.deleteProduct = async function(id) {
+            if (confirm("Deseja realmente excluir este produto?")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id));
+                    showToast("Produto excluído!");
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        // Render Fiados Tab
+        function renderFiados() {
+            let totalFiado = fiados.reduce((acc, f) => acc + f.amount, 0);
+            document.getElementById('fiado-tab-total').innerText = formatMoney(totalFiado);
+
+            if (fiados.length === 0) {
+                document.getElementById('fiado-customers-list').innerHTML = '<p class="col-span-full text-center text-slate-400 py-8 text-sm">Nenhum fiado registrado</p>';
+                return;
+            }
+
+            let html = '';
+            fiados.forEach(f => {
+                html += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900">${f.customer}</h4>
+                                    <p class="text-[11px] text-slate-400">Última atualização: ${new Date(f.date).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                            </div>
+                            <span class="font-bold text-rose-600 text-lg">${formatMoney(f.amount)}</span>
+                        </div>
+                        <div class="flex space-x-2 pt-2 border-t border-slate-100">
+                            <button onclick="payFiado('${f.id}', ${f.amount})" class="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1">
+                                <i class="fa-solid fa-check"></i><span>Quitar Total</span>
+                            </button>
+                            <button onclick="partialPayFiado('${f.id}', ${f.amount})" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1">
+                                <i class="fa-solid fa-minus"></i><span>Abater Valor</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('fiado-customers-list').innerHTML = html;
+        }
+
+        window.payFiado = async function(id, amount) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fiados', id));
+                showToast("Fiado quitado com sucesso!");
+            } catch (e) { console.error(e); }
+        }
+
+        window.partialPayFiado = async function(id, currentAmount) {
+            let val = prompt("Informe o valor que o cliente está pagando (R$):");
+            if (val) {
+                let paid = parseFloat(val.replace(',', '.'));
+                if (!isNaN(paid) && paid > 0) {
+                    let newAmount = currentAmount - paid;
+                    try {
+                        if (newAmount <= 0) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fiados', id));
+                        } else {
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fiados', id), { amount: newAmount });
+                        }
+                        showToast("Pagamento parcial registrado!");
+                    } catch (e) { console.error(e); }
+                }
+            }
+        }
+
+        // Helpers
+        function formatMoney(val) {
+            return 'R$ ' + Number(val).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+
+            msg.innerText = message;
+            if (type === 'error') {
+                icon.className = "fa-solid fa-circle-exclamation text-rose-400";
+            } else {
+                icon.className = "fa-solid fa-circle-check text-emerald-400";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initAuth();
+        }
+    </script>
+</body>
+</html>
